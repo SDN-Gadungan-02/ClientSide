@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { login as apiLogin, verify } from '../../services/authService';
+import { login as apiLogin, verify, api } from '../../services/authService';
 
 const AuthContext = createContext();
 
@@ -51,31 +51,26 @@ export const AuthProvider = ({ children }) => {
     // AuthContext.jsx
     const initializeAuth = async () => {
         try {
-            console.log('Initializing auth...');
-            const result = await verify();
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setAuthState({ isAuthenticated: false, user: null });
+                return;
+            }
 
-            if (result.success) {
-                console.log('Auth initialized with user:', result.user);
-                setAuthState({
-                    user: result.user,
-                    loading: false,
-                    error: null
-                });
+            // Set the header before making the verify request
+            api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+            const { success, user } = await verify();
+            if (success) {
+                setAuthState({ isAuthenticated: true, user });
             } else {
-                console.log('Auth initialization failed:', result.message);
-                setAuthState({
-                    user: null,
-                    loading: false,
-                    error: result.message
-                });
+                // Clear invalid token
+                localStorage.removeItem('token');
+                setAuthState({ isAuthenticated: false, user: null });
             }
         } catch (error) {
             console.error('Auth initialization error:', error);
-            setAuthState({
-                user: null,
-                loading: false,
-                error: 'Failed to initialize authentication'
-            });
+            setAuthState({ isAuthenticated: false, user: null });
         }
     };
 

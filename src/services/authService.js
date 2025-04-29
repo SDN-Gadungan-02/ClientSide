@@ -32,18 +32,20 @@ api.interceptors.response.use(
     }
 );
 
-export const login = async (username, password) => {
+const login = async (username, password) => {
     try {
         const response = await api.post('/auth/login', { username, password });
 
         if (response.data.token) {
             localStorage.setItem('token', response.data.token);
-            localStorage.setItem('role', response.data.user.role);
+            localStorage.setItem('user', JSON.stringify(response.data.user));
+
+            // Set default header for subsequent requests
             api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
 
             return {
                 success: true,
-                user: response.data.user,  // Ensure this contains the role
+                user: response.data.user,
                 token: response.data.token
             };
         }
@@ -61,7 +63,7 @@ export const login = async (username, password) => {
     }
 };
 // services/authService.js
-export const verify = async () => {
+const verify = async () => {
     try {
         const response = await api.get('/auth/verify');
 
@@ -87,7 +89,7 @@ export const verify = async () => {
     }
 };
 
-export const logout = async () => {
+const logout = async () => {
     try {
         console.log('Attempting logout');
         await api.post('/auth/logout');
@@ -101,3 +103,5 @@ export const logout = async () => {
         console.log('Client-side auth cleaned up');
     }
 };
+
+export { login, verify, logout, api };

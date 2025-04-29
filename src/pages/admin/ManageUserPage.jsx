@@ -37,7 +37,7 @@ const ManageUserPage = () => {
     const [openModal, setOpenModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [currentUser, setCurrentUser] = useState({
-        nama: "",
+        username: "",
         email: "",
         password: "",
         role: "admin",
@@ -113,7 +113,7 @@ const ManageUserPage = () => {
     // Validasi Form
     const validateForm = () => {
         const newErrors = {};
-        if (!currentUser.username.trim()) newErrors.nama = "Nama wajib diisi";
+        if (!currentUser.username.trim()) newErrors.username = "Nama wajib diisi";
         if (!currentUser.email.trim()) newErrors.email = "Email wajib diisi";
         if (!currentUser.password && !isEditing) newErrors.password = "Password wajib diisi";
         return newErrors;
@@ -168,10 +168,10 @@ const ManageUserPage = () => {
                         name="username"
                         value={currentUser.username}
                         onChange={handleChange}
-                        error={!!errors.nama}
+                        error={!!errors.username}
                         icon={<UserCircleIcon className="h-5 w-5" />}
                     />
-                    {errors.nama && <span className="text-red-500 text-sm">{errors.nama}</span>}
+                    {errors.username && <span className="text-red-500 text-sm">{errors.username}</span>}
 
                     <Input
                         label="Email"

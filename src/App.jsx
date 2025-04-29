@@ -10,7 +10,7 @@ import VirtualTourPage from './pages/user/VirtualTourPage'
 import VisiMisiPage from './pages/user/VisiMisiPage'
 import HeadSpeechPage from './pages/user/HeadSpeechPage'
 import LoginPage from './pages/admin/LoginPage'
-import ManageFeedPage from './pages/admin/ManageFeedPage'
+import ManagePostPage from './pages/admin/ManagePostPage'
 import ManagePanoramaPage from './pages/admin/ManagePanoramaPage'
 import LayoutAdmin from './components/admin/LayoutAdmin'
 import DashboardPage from './pages/admin/DashboardPage'
@@ -42,7 +42,7 @@ function App() {
           path="posts"
           element={
             <RequireAuth allowedRoles={['admin', 'superadmin']}>
-              <ManageFeedPage path="posts" />
+              <ManagePostPage path="posts" />
             </RequireAuth>
           }
         />

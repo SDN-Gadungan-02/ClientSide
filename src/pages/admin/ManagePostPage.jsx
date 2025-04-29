@@ -12,7 +12,7 @@ import {
 import PostService from "../../services/postService";
 import { toast } from "react-toastify";
 
-const ManageFeedPage = () => {
+const ManagePostPage = () => {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -107,7 +107,7 @@ const ManageFeedPage = () => {
         if (path.startsWith('http')) return path;
 
         // Gunakan URL backend langsung
-        const backendUrl = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+        const backendUrl = 'http://localhost:3000';
 
         // Handle berbagai format path
         if (path.startsWith('/static')) {
@@ -488,4 +488,4 @@ const ManageFeedPage = () => {
     );
 };
 
-export default ManageFeedPage;
+export default ManagePostPage;

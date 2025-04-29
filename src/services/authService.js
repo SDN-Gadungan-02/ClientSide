@@ -1,43 +1,33 @@
+// services/authService.js
 import axios from 'axios';
 
+// Create axios instance with base configuration
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
+    baseURL: 'http://localhost:3000/api',
     withCredentials: true,
-    timeout: 10000 // Tambahkan timeout
+    timeout: 10000
 });
 
-// Interceptor untuk handle token
+// Request interceptor for adding token
 api.interceptors.request.use(config => {
     const token = localStorage.getItem('token');
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
-}, error => {
-    return Promise.reject(error);
 });
 
-// Interceptor response dengan penanganan error lebih baik
+// Response interceptor for handling errors
 api.interceptors.response.use(
     response => response,
     error => {
-        if (error.code === 'ECONNABORTED') {
-            console.error('Request timeout');
-            return Promise.reject({
-                message: 'Request timeout',
-                error: 'TIMEOUT'
-            });
-        }
-
         if (error.response?.status === 401) {
-            console.log('Token invalid/expired, redirecting to login');
             localStorage.removeItem('token');
-            // Hindari infinite loop
+            localStorage.removeItem('role');
             if (!window.location.pathname.includes('/login')) {
                 window.location.href = '/login';
             }
         }
-
         return Promise.reject(error);
     }
 );
@@ -48,32 +38,66 @@ export const login = async (username, password) => {
 
         if (response.data.token) {
             localStorage.setItem('token', response.data.token);
-        }
+            localStorage.setItem('role', response.data.user.role);
+            api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
 
-        return {
-            success: true,
-            user: response.data.user
-        };
-    } catch (error) {
-        console.error('Login error:', error);
+            return {
+                success: true,
+                user: response.data.user,  // Ensure this contains the role
+                token: response.data.token
+            };
+        }
         return {
             success: false,
-            message: error.response?.data?.message || 'Login failed'
+            message: 'Login failed - no token received'
+        };
+    } catch (error) {
+        console.error('Login error details:', error);
+        return {
+            success: false,
+            message: error.response?.data?.message || 'Login failed',
+            error: error.response?.data?.error || 'LOGIN_FAILED'
+        };
+    }
+};
+// services/authService.js
+export const verify = async () => {
+    try {
+        const response = await api.get('/auth/verify');
+
+        if (response.data.success) {
+            console.log('Verify successful:', response.data.user);
+            return {
+                success: true,
+                user: response.data.user
+            };
+        }
+
+        console.log('Verify failed:', response.data.message);
+        return {
+            success: false,
+            message: response.data.message
+        };
+    } catch (error) {
+        console.error('Verify request failed:', error);
+        return {
+            success: false,
+            message: 'Authentication service unavailable'
         };
     }
 };
 
-export const verify = async () => {
+export const logout = async () => {
     try {
-        const response = await api.get('/auth/verify');
-        return {
-            success: true,
-            user: response.data.user
-        };
+        console.log('Attempting logout');
+        await api.post('/auth/logout');
     } catch (error) {
-        return {
-            success: false,
-            user: null
-        };
+        console.error('Logout request failed:', error);
+    } finally {
+        // Always clean up client-side
+        localStorage.removeItem('token');
+        localStorage.removeItem('role');
+        delete api.defaults.headers.common['Authorization'];
+        console.log('Client-side auth cleaned up');
     }
 };

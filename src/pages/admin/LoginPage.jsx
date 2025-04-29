@@ -19,24 +19,32 @@ const LoginPage = () => {
         });
     };
 
+    // pages/LoginPage.jsx
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
         setLoading(true);
+        setError('');
 
         try {
             const result = await login(formData.username, formData.password);
+            console.log('Login result:', result);
 
             if (result.success) {
-                // Debug: log sebelum redirect
-                console.log('Login successful, redirecting...');
-                navigate('/admin/dashboard'); // Sesuaikan dengan route yang benar
+                // Check if user object exists and has role
+                if (result.user && result.user.role) {
+                    const targetRoute = result.user.role === 'superadmin'
+                        ? '/admin/dashboard'
+                        : '/admin/posts';
+                    navigate(targetRoute);
+                } else {
+                    setError('User data incomplete');
+                }
             } else {
                 setError(result.message || 'Login failed');
             }
         } catch (err) {
+            setError('An unexpected error occurred');
             console.error('Login error:', err);
-            setError(err.message || 'An error occurred during login');
         } finally {
             setLoading(false);
         }

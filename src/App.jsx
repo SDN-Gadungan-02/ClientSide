@@ -36,7 +36,6 @@ function App() {
         <Route path="virtual-tour" element={<VirtualTourPage />} />
         <Route path="visi-misi" element={<VisiMisiPage />} />
         <Route path="sambutan-kepala-sekolah" element={<HeadSpeechPage />} />
-
       </Route>
       <Route path="/admin" element={<LayoutAdmin />}>
         <Route

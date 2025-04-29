@@ -16,18 +16,24 @@ export const AuthProvider = ({ children }) => {
 
             if (result.success) {
                 setAuthState({
-                    user: result.user,
+                    user: result.user,  // Make sure this contains the full user object
                     loading: false,
                     error: null
                 });
-                return { success: true };
+                return {
+                    success: true,
+                    user: result.user  // Explicitly return the user object
+                };
             } else {
                 setAuthState({
                     user: null,
                     loading: false,
                     error: result.message
                 });
-                return { success: false, message: result.message };
+                return {
+                    success: false,
+                    message: result.message
+                };
             }
         } catch (error) {
             setAuthState({
@@ -42,19 +48,33 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    // AuthContext.jsx
     const initializeAuth = async () => {
         try {
+            console.log('Initializing auth...');
             const result = await verify();
-            setAuthState({
-                user: result.user || null,
-                loading: false,
-                error: null
-            });
+
+            if (result.success) {
+                console.log('Auth initialized with user:', result.user);
+                setAuthState({
+                    user: result.user,
+                    loading: false,
+                    error: null
+                });
+            } else {
+                console.log('Auth initialization failed:', result.message);
+                setAuthState({
+                    user: null,
+                    loading: false,
+                    error: result.message
+                });
+            }
         } catch (error) {
+            console.error('Auth initialization error:', error);
             setAuthState({
                 user: null,
                 loading: false,
-                error: error.message
+                error: 'Failed to initialize authentication'
             });
         }
     };

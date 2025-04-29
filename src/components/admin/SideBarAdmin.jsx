@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     NewspaperIcon,
@@ -10,16 +10,30 @@ import {
     ArrowLeftOnRectangleIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../auth/AuthContext';
+import { logout } from '../../services/authService';
 
 
 const SideBarAdmin = () => {
     const location = useLocation();
-    const { user, logout } = useAuth();
+    // const { user, logout } = useAuth();
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        useAuth.logout(); // Panggil fungsi logout dari AuthContext
-        navigate('/login'); // Redirect ke halaman login
+    useEffect(() => {
+        // Ambil token dari localStorage
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            // Jika token tidak ada, redirect ke halaman login
+            navigate('/login');
+        } else {
+            console.log('Token ditemukan:', token);
+            // Anda dapat menggunakan token ini untuk permintaan API
+        }
+    }, []);
+
+    const handleLogout = async () => {
+        logout();
+        navigate('/login');
     };
 
 

@@ -3,7 +3,7 @@ import api from '../utils/api';
 const PostService = {
     getPosts: async (searchTerm = '') => {
         try {
-            const response = await api.get(`/posts?search=${searchTerm}`);
+            const response = await api.get(`/posts?search=${encodeURIComponent(searchTerm)}`);
             return response.data;
         } catch (error) {
             throw error;

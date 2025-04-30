@@ -25,10 +25,9 @@ import {
     EnvelopeIcon,
     LockClosedIcon
 } from "@heroicons/react/24/solid";
-import axios from 'axios';
 import { toast } from 'react-toastify';
 
-const API_URL = 'http://localhost:3000'; // Make sure this matches your backend URL
+import api from '../../utils/api'; // Import your API instance
 
 const ManageUserPage = () => {
     // State Management
@@ -50,15 +49,21 @@ const ManageUserPage = () => {
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`${API_URL}/api/users`); // Added /users here
+            const response = await api.get('/users'); // Gunakan instance api yang sudah ada
             setUsers(response.data.data);
         } catch (error) {
+            if (error.response?.status === 401) {
+                // Handle unauthorized
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+            }
             console.error('Error fetching users:', error);
-            toast.error('Failed to fetch users');
+            toast.error(error.response?.data?.message || 'Failed to fetch users');
         } finally {
             setLoading(false);
         }
     };
+
     useEffect(() => {
         fetchUsers();
     }, []);

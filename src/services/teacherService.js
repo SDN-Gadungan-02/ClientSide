@@ -3,7 +3,7 @@ import api from '../utils/api';
 const TeacherService = {
     getTeachers: async (search = '') => {
         try {
-            const response = await api.get(`/teachers?search=${(search)}`);
+            const response = await api.get(`/teachers?search=${search}`);
             return response.data;
         } catch (error) {
             throw error;

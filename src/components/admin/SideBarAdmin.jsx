@@ -60,7 +60,7 @@ const SideBarAdmin = () => {
         {
             name: 'Kelola Guru',
             icon: <AcademicCapIcon className="h-5 w-5" />,
-            path: '/admin/profile',
+            path: '/admin/teacher',
             roles: ['superadmin']
         },
         {

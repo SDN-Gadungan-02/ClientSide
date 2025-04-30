@@ -14,7 +14,7 @@ import ManagePostPage from './pages/admin/ManagePostPage'
 import ManagePanoramaPage from './pages/admin/ManagePanoramaPage'
 import LayoutAdmin from './components/admin/LayoutAdmin'
 import DashboardPage from './pages/admin/DashboardPage'
-import ManageProfilePage from './pages/admin/ManageProfilePage'
+import ManageTeacherPage from './pages/admin/ManageTeacherPage'
 import ManageUserPage from './pages/admin/ManageUserPage'
 import RequireAuth from './components/auth/RequireAuth'
 import Layout from './components/user/Layout'
@@ -65,10 +65,10 @@ function App() {
           }
         />
         <Route
-          path="profile"
+          path="teacher"
           element={
             <RequireAuth allowedRoles={['superadmin']} >
-              <ManageProfilePage path="profile" />
+              <ManageTeacherPage path="teacher" />
             </RequireAuth>
           }
         />

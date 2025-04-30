@@ -8,7 +8,7 @@ const pageTitles = {
     '/admin/dashboard': 'Dashboard',
     '/admin/posts': 'Kelola Postingan',
     '/admin/users': 'Kelola Pengguna',
-    '/admin/profile': 'Kelola Guru',
+    '/admin/teacher': 'Kelola Guru',
     '/admin/panorama': 'Kelola Panorama'
 };
 

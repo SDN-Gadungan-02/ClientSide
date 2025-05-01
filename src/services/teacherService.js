@@ -1,9 +1,9 @@
 import api from '../utils/api';
 
 const TeacherService = {
-    getTeachers: async (search = '') => {
+    getTeachers: async (searchTerm = '') => {
         try {
-            const response = await api.get(`/teachers?search=${search}`);
+            const response = await api.get(`/teachers?search=${encodeURIComponent(searchTerm)}`);
             return response.data;
         } catch (error) {
             throw error;

@@ -23,9 +23,8 @@ const ManageTeacherPage = () => {
             id: "",
             nama_guru: "",
             pas_foto: "",
-            NIP: "",
+            nip: "",
             keterangan_guru: "",
-            status: "active"
         },
         openDeleteModal: false,
         teacherToDelete: null,
@@ -81,9 +80,8 @@ const ManageTeacherPage = () => {
                 id: "",
                 nama_guru: "",
                 pas_foto: "",
-                NIP: "",
+                nip: "",
                 keterangan_guru: "",
-                status: "active"
             });
             setStateValue("imagePreview", "");
             setStateValue("imageFile", null);
@@ -106,7 +104,7 @@ const ManageTeacherPage = () => {
     const validateForm = () => {
         const newErrors = {};
         if (!currentTeacher.nama_guru) newErrors.nama_guru = "Nama wajib diisi";
-        if (!currentTeacher.NIP) newErrors.NIP = "NIP wajib diisi";
+        if (!currentTeacher.nip) newErrors.nip = "NIP wajib diisi";
         return newErrors;
     };
 
@@ -122,9 +120,8 @@ const ManageTeacherPage = () => {
         try {
             const formData = new FormData();
             formData.append("nama_guru", currentTeacher.nama_guru);
-            formData.append("NIP", currentTeacher.NIP);
+            formData.append("NIP", currentTeacher.nip);
             formData.append("keterangan_guru", currentTeacher.keterangan_guru);
-            formData.append("status", currentTeacher.status);
 
             if (imageFile) {
                 formData.append("pas_foto", imageFile);
@@ -206,7 +203,7 @@ const ManageTeacherPage = () => {
                             <table className="w-full min-w-max table-auto">
                                 <thead>
                                     <tr>
-                                        {["Foto", "Nama", "NIP", "Keterangan", "Status", "Aksi"].map((head) => (
+                                        {["Foto", "Nama", "NIP", "Keterangan", "Aksi"].map((head) => (
                                             <th key={head} className="border-b border-blue-gray-100 bg-blue-gray-50 p-4">
                                                 <Typography variant="small" className="font-normal leading-none opacity-70">
                                                     {head}
@@ -231,14 +228,9 @@ const ManageTeacherPage = () => {
                                                     {teacher.nama_guru}
                                                 </Typography>
                                             </td>
-                                            <td className="p-4">{teacher.NIP}</td>
+                                            <td className="p-4">{teacher.nip}</td>
                                             <td className="p-4">{teacher.keterangan_guru}</td>
-                                            <td className="p-4">
-                                                <Chip
-                                                    value={teacher.status === "active" ? "Aktif" : "Non-Aktif"}
-                                                    color={teacher.status === "active" ? "green" : "red"}
-                                                />
-                                            </td>
+
                                             <td className="p-4">
                                                 <div className="flex gap-2">
                                                     <Tooltip content="Edit">
@@ -290,22 +282,31 @@ const ManageTeacherPage = () => {
                                 size="xxl"
                                 className="border-2 border-gray-300"
                             />
-                            <label className="cursor-pointer">
-                                <Button
-                                    variant="outlined"
-                                    color="blue"
-                                    className="flex items-center gap-2"
-                                >
-                                    <PhotoIcon className="h-5 w-5" />
-                                    {imagePreview ? "Ganti Foto" : "Upload Foto"}
-                                </Button>
+                            <div>
                                 <input
                                     type="file"
+                                    id="file-upload"
                                     accept="image/*"
                                     className="hidden"
                                     onChange={handleImageChange}
                                 />
-                            </label>
+                                <div className="relative">
+                                    <Button
+                                        variant="outlined"
+                                        color="blue"
+                                        className="flex items-center gap-2"
+                                    >
+                                        <PhotoIcon className="h-5 w-5" />
+                                        {imagePreview ? "Ganti Foto" : "Upload Foto"}
+                                    </Button>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -324,15 +325,15 @@ const ManageTeacherPage = () => {
                     )}
 
                     <Input
-                        label="NIP *"
-                        name="NIP"
-                        value={currentTeacher.NIP}
+                        label="NIP"
+                        name="nip"
+                        value={currentTeacher.nip}
                         onChange={handleChange}
-                        error={!!errors.NIP}
+                        error={!!errors.nip}
                     />
-                    {errors.NIP && (
+                    {errors.nip && (
                         <Typography color="red" variant="small">
-                            {errors.NIP}
+                            {errors.nip}
                         </Typography>
                     )}
 
@@ -344,17 +345,7 @@ const ManageTeacherPage = () => {
                         rows={3}
                     />
 
-                    <Select
-                        label="Status"
-                        value={currentTeacher.status}
-                        onChange={(value) => setStateValue("currentTeacher", {
-                            ...currentTeacher,
-                            status: value
-                        })}
-                    >
-                        <Option value="active">Aktif</Option>
-                        <Option value="inactive">Non-Aktif</Option>
-                    </Select>
+
                 </DialogBody>
                 <DialogFooter>
                     <Button

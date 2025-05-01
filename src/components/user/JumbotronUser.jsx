@@ -83,7 +83,7 @@ const JumbotronUser = () => {
                     <button
                         key={index}
                         onClick={() => setCurrentSlide(index)}
-                        className={`w-3 h-3 rounded-full transition-all ${currentSlide === index ? 'bg-white w-6' : 'bg-white/50'}`}
+                        className={`w-3 h-1 rounded-full transition-all ${currentSlide === index ? 'bg-white w-6' : 'bg-white/50'}`}
                         aria-label={`Go to slide ${index + 1}`}
                     />
                 ))}

@@ -48,25 +48,25 @@ const SideBarAdmin = () => {
         {
             name: 'Kelola Postingan',
             icon: <NewspaperIcon className="h-5 w-5" />,
-            path: '/admin/posts',
+            path: '/admin/kelola-postingan',
             roles: ['admin', 'superadmin']
         },
         {
             name: 'Kelola Pengguna',
             icon: <UserGroupIcon className="h-5 w-5" />,
-            path: '/admin/users',
+            path: '/admin/kelola-pengguna',
             roles: ['superadmin']
         },
         {
             name: 'Kelola Guru',
             icon: <AcademicCapIcon className="h-5 w-5" />,
-            path: '/admin/teacher',
+            path: '/admin/kelola-guru',
             roles: ['superadmin']
         },
         {
             name: 'Kelola Panorama',
             icon: <GlobeAltIcon className="h-5 w-5" />,
-            path: '/admin/panorama',
+            path: '/admin/kelola-panorama',
             roles: ['superadmin']
         }
     ];

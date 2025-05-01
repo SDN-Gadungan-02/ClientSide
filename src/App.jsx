@@ -39,7 +39,7 @@ function App() {
       </Route>
       <Route path="/admin" element={<LayoutAdmin />}>
         <Route
-          path="posts"
+          path="kelola-postingan"
           element={
             <RequireAuth allowedRoles={['admin', 'superadmin']}>
               <ManagePostPage path="posts" />
@@ -57,7 +57,7 @@ function App() {
           }
         />
         <Route
-          path="users"
+          path="kelola-pengguna"
           element={
             <RequireAuth allowedRoles={['superadmin']} >
               <ManageUserPage path="users" />
@@ -65,7 +65,7 @@ function App() {
           }
         />
         <Route
-          path="teacher"
+          path="kelola-guru"
           element={
             <RequireAuth allowedRoles={['superadmin']} >
               <ManageTeacherPage path="teacher" />
@@ -73,7 +73,7 @@ function App() {
           }
         />
         <Route
-          path="panorama"
+          path="kelola-panorama"
           element={
             <RequireAuth allowedRoles={['superadmin']} >
               <ManagePanoramaPage path="panorama" />

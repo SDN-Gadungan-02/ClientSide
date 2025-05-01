@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Card,
     CardBody,
@@ -8,7 +8,8 @@ import {
     TabsHeader,
     Tab,
     Textarea,
-    Input
+    Input,
+    Spinner
 } from "@material-tailwind/react";
 import {
     LightBulbIcon,
@@ -19,13 +20,17 @@ import {
     DocumentTextIcon,
     UsersIcon,
     AcademicCapIcon,
-    ChartBarIcon
+    ChartBarIcon,
+    UserCircleIcon
 } from "@heroicons/react/24/solid";
+import { toast } from "react-toastify";
+import HistoryService from '../../services/historyService';
 
 const DashboardPage = () => {
-    // State untuk data
     const [activeTab, setActiveTab] = useState("vision-mission");
     const [isEditing, setIsEditing] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [historyData, setHistoryData] = useState(null);
 
     // Data statistik
     const stats = [
@@ -46,8 +51,7 @@ const DashboardPage = () => {
             "Mencapai rata-rata nilai UN di atas 85",
             "Memiliki 80% guru bersertifikasi",
             "Mengembangkan ekstrakurikuler unggulan"
-        ],
-        history: "SDN Gadungan 02 didirikan pada tahun 1985 dengan tujuan memberikan pendidikan dasar yang berkualitas bagi masyarakat sekitar. Sekolah ini telah mengalami berbagai perkembangan dan renovasi untuk meningkatkan kualitas fasilitas pendidikan."
+        ]
     });
 
     // State untuk edit form
@@ -60,27 +64,81 @@ const DashboardPage = () => {
         history: ""
     });
 
+    // Load data saat komponen mount
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                setIsLoading(true);
+
+                // Load history data
+                const historyResponse = await HistoryService.getHistory();
+                setHistoryData({
+                    id: historyResponse.data.id,
+                    text: historyResponse.data.text_history || "Sejarah sekolah belum tersedia",
+                    author: historyResponse.data.author,
+                    createdAt: historyResponse.data.created_at
+                });
+
+                // Set initial edit form
+                setEditForm(prev => ({
+                    ...prev,
+                    history: historyResponse.data.text_history || ""
+                }));
+
+                setIsLoading(false);
+            } catch (error) {
+                console.error("Gagal memuat data:", error);
+                toast.error("Gagal memuat data");
+                setIsLoading(false);
+            }
+        };
+
+        loadData();
+    }, []);
+
     // Fungsi untuk memulai edit
     const startEditing = (section) => {
         setEditForm({
             vision: schoolData.vision,
             missions: [...schoolData.missions],
             goals: [...schoolData.goals],
-            history: schoolData.history
+            history: historyData?.text || ""
         });
         setIsEditing(section);
     };
 
-    // Fungsi untuk menyimpan edit
-    const saveEdit = () => {
+    // Fungsi untuk menyimpan edit visi, misi, tujuan
+    const saveVisionMission = () => {
         setSchoolData({
             ...schoolData,
             vision: editForm.vision,
             missions: editForm.missions,
-            goals: editForm.goals,
-            history: editForm.history
+            goals: editForm.goals
         });
         setIsEditing(false);
+        toast.success("Visi, Misi & Tujuan berhasil diperbarui");
+    };
+
+    // Fungsi untuk menyimpan edit sejarah
+    const saveHistoryEdit = async () => {
+        try {
+            const response = await HistoryService.updateHistory({
+                text_history: editForm.history
+            });
+
+            setHistoryData({
+                id: response.data.id,
+                text: editForm.history,
+                author: response.data.author,
+                createdAt: response.data.created_at
+            });
+
+            setIsEditing(false);
+            toast.success("Sejarah sekolah berhasil diperbarui");
+        } catch (error) {
+            console.error("Gagal memperbarui sejarah sekolah:", error);
+            toast.error("Gagal memperbarui sejarah sekolah");
+        }
     };
 
     // Fungsi untuk menambah item
@@ -112,6 +170,14 @@ const DashboardPage = () => {
             setEditForm({ ...editForm, goals: updated });
         }
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <Spinner className="h-12 w-12" />
+            </div>
+        );
+    }
 
     return (
         <div className="container mx-auto p-4">
@@ -224,7 +290,7 @@ const DashboardPage = () => {
                                         <Button
                                             size="sm"
                                             color="green"
-                                            onClick={saveEdit}
+                                            onClick={saveVisionMission}
                                             className="flex items-center gap-2"
                                         >
                                             <CheckIcon className="h-4 w-4" />
@@ -343,14 +409,25 @@ const DashboardPage = () => {
                                 </div>
 
                                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                                    <Typography>{schoolData.history}</Typography>
+                                    <Typography className="whitespace-pre-line">
+                                        {historyData?.text}
+                                    </Typography>
                                 </div>
 
-                                <div className="flex gap-3">
-                                    <Button variant="outlined" color="blue">
-                                        Lihat Arsip Foto
-                                    </Button>
-                                </div>
+                                {historyData?.author && (
+                                    <div className="flex items-center gap-2 text-gray-500 text-sm">
+                                        <UserCircleIcon className="h-4 w-4" />
+                                        <span>
+                                            Terakhir diperbarui pada tanggal : {new Date(historyData.createdAt).toLocaleDateString('id-ID', {
+                                                day: 'numeric',
+                                                month: 'long',
+                                                year: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })}
+                                        </span>
+                                    </div>
+                                )}
                             </>
                         ) : (
                             <>
@@ -362,7 +439,7 @@ const DashboardPage = () => {
                                         <Button
                                             size="sm"
                                             color="green"
-                                            onClick={saveEdit}
+                                            onClick={saveHistoryEdit}
                                             className="flex items-center gap-2"
                                         >
                                             <CheckIcon className="h-4 w-4" />
@@ -386,13 +463,12 @@ const DashboardPage = () => {
                                     rows={8}
                                     value={editForm.history}
                                     onChange={(e) => setEditForm({ ...editForm, history: e.target.value })}
+                                    className="mb-4"
                                 />
 
-                                <div className="mt-4">
-                                    <Button variant="outlined" color="blue" fullWidth>
-                                        Unggah Foto Sejarah
-                                    </Button>
-                                </div>
+                                <Typography variant="small" className="text-gray-500">
+                                    Tips: Gunakan format paragraf yang jelas dengan jarak antar paragraf
+                                </Typography>
                             </>
                         )}
                     </CardBody>

@@ -16,12 +16,12 @@ export default function FooterUser() {
     ];
 
     return (
-        <footer className="relative z-50 bg-gray-800 text-white py-8">
+        <footer className="relative z-50 bg-darkGreenColor text-white py-8">
             {/* Overlay untuk memastikan background tidak terlihat */}
-            <div className="absolute inset-0 bg-gray-800 -z-10"></div>
+            <div className="absolute inset-0 bg-darkGreenColor -z-10"></div>
 
             <div className="container mx-auto px-4 relative z-10">
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-8">
                     {/* Logo Sekolah */}
                     <div className="col-span-1">
                         <Typography variant="h5" className="mb-4">
@@ -35,7 +35,7 @@ export default function FooterUser() {
                     {/* Footer Links */}
                     {footerLinks.map((section, index) => (
                         <div key={index} className="col-span-1">
-                            <Typography variant="h6" className="mb-4 text-blue-400">
+                            <Typography variant="h6" className="mb-4 text-whiteColor">
                                 {section.title}
                             </Typography>
                             <ul className="space-y-2">
@@ -55,7 +55,7 @@ export default function FooterUser() {
 
                     {/* Kontak */}
                     <div className="col-span-1">
-                        <Typography variant="h6" className="mb-4 text-blue-400">
+                        <Typography variant="h6" className="mb-4 text-whiteColor">
                             Kontak Kami
                         </Typography>
                         <ul className="space-y-3">
@@ -81,7 +81,7 @@ export default function FooterUser() {
                     </div>
                 </div>
 
-                <div className="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+                <div className="border-t border-lightGreenColor mt-8 pt-6 text-center text-whiteColor">
                     <Typography variant="small">
                         © {new Date().getFullYear()} SDN GADUNGAN 2. All rights reserved.
                     </Typography>

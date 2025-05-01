@@ -14,11 +14,12 @@ export default {
     extend: {
       colors: {
         whiteColor: '#ffffff',
+        blackColor: '#000000',
         lightGreenColor: '#b5ea8c',
         lightGreenColor2: '#94bf73',
         mediumGreenColor1: '#739559',
         mediumGreenColor2: '#526a40',
-        darkGreenColor: '###314026',
+        darkGreenColor: '#314026',
         darkGreenColor2: '#11150d',
       },
       backgroundImage: {

@@ -37,7 +37,7 @@ export default function Header() {
     return (
         <div className="sticky top-0 z-50 w-full">
             {/* Top Header */}
-            <div className={`bg-blue-800 text-white transition-all duration-300 ${isScrolled ? 'h-0 overflow-hidden py-0' : 'py-2'}`}>
+            <div className={`bg-darkGreenColor text-white transition-all duration-300 ${isScrolled ? 'h-0 overflow-hidden py-0' : 'py-2'}`}>
                 <div className="container mx-auto flex flex-wrap justify-center gap-x-6 gap-y-2">
                     <div className="flex items-center">
                         <MapPinIcon className="h-4 w-4 mr-2" />
@@ -55,13 +55,13 @@ export default function Header() {
             </div>
 
             {/* Main Header - Full Width */}
-            <Navbar className="w-full max-w-full rounded-none px-4 py-3 shadow-none border-b">
+            <Navbar className=" bg-whiteColor w-full max-w-full rounded-none px-4 py-3 shadow-none border-b">
                 <div className="container mx-auto flex items-center justify-between">
                     {/* Logo */}
                     <div className="flex items-center gap-3">
                         <img src={logo} alt="Logo" className="h-10 w-10" />
                         <Typography variant="h5" className="cursor-pointer">
-                            <span className="block text-gray-900 text-medium">SDN GADUNGAN 02</span>
+                            <span className="block text-gray-900 text-medium font-bold">SDN GADUNGAN 02</span>
                         </Typography>
                     </div>
 
@@ -77,7 +77,7 @@ export default function Header() {
                                 >
                                     <a
                                         href={item.href}
-                                        className="flex items-center py-2 px-3 text-blackColor hover:text-blue-600 transition-colors text-lg" /* Larger text and padding */
+                                        className="flex items-center py-2 px-3 text-blackColor transition-colors text-lg" /* Larger text and padding */
                                     >
                                         {item.name}
                                     </a>

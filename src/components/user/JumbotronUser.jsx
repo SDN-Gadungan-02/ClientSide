@@ -9,22 +9,25 @@ import {
     XMarkIcon
 } from "@heroicons/react/24/solid";
 
+import jumbo1 from "../../assets/jumbo1.png";
+import jumbo2 from "../../assets/jumbo2.jpg";
+
 const JumbotronUser = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
 
     const slides = [
         {
-            image: "https://source.unsplash.com/random/1600x900?sig=1&school",
+            image: jumbo1,
             title: "Selamat Datang di SDN GADUNGAN 2",
             subtitle: "Sekolah Unggul Berbasis Teknologi Informasi dan Karakter Bangsa"
         },
         {
-            image: "https://source.unsplash.com/random/1600x900?sig=2&classroom",
+            image: jumbo2,
             title: "Pendidikan Berkualitas",
             subtitle: "Menyiapkan Generasi Unggul untuk Masa Depan"
         },
         {
-            image: "https://source.unsplash.com/random/1600x900?sig=3&library",
+            image: jumbo2,
             title: "Fasilitas Modern",
             subtitle: "Lingkungan Belajar yang Nyaman dan Berteknologi"
         }

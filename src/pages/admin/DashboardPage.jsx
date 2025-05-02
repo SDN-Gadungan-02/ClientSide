@@ -25,14 +25,15 @@ import {
 } from "@heroicons/react/24/solid";
 import { toast } from "react-toastify";
 import HistoryService from '../../services/historyService';
+import VisiMisiService from '../../services/visiMisiService';
 
 const DashboardPage = () => {
+    // State untuk tab aktif dan mode editing
     const [activeTab, setActiveTab] = useState("vision-mission");
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [historyData, setHistoryData] = useState(null);
 
-    // Data statistik
+    // State untuk data statistik
     const stats = [
         { title: "Total Postingan", value: "24", icon: <DocumentTextIcon className="h-6 w-6" />, color: "bg-blue-500" },
         { title: "Total Guru", value: "12", icon: <AcademicCapIcon className="h-6 w-6" />, color: "bg-green-500" },
@@ -40,21 +41,21 @@ const DashboardPage = () => {
         { title: "Aktivitas Terbaru", value: "5", icon: <ChartBarIcon className="h-6 w-6" />, color: "bg-purple-500" }
     ];
 
-    const [schoolData, setSchoolData] = useState({
-        vision: "Menjadi sekolah unggulan yang menghasilkan generasi berkarakter, berprestasi, dan berdaya saing global",
-        missions: [
-            "Menyelenggarakan pendidikan berkualitas",
-            "Mengembangkan potensi siswa secara holistik",
-            "Menanamkan nilai-nilai karakter bangsa"
-        ],
-        goals: [
-            "Mencapai rata-rata nilai UN di atas 85",
-            "Memiliki 80% guru bersertifikasi",
-            "Mengembangkan ekstrakurikuler unggulan"
-        ]
+    // State untuk data sejarah
+    const [historyData, setHistoryData] = useState(null);
+
+    // State untuk data visi, misi, dan tujuan
+    const [visiMisiData, setVisiMisiData] = useState({
+        id: null,
+        visi: "Memuat visi sekolah...",
+        misi: ["Memuat misi sekolah..."],
+        tujuan: ["Memuat tujuan sekolah..."],
+        author: null,
+        createdAt: null,
+        updatedAt: null
     });
 
-    // State untuk edit form
+    // State untuk form editing
     const [editForm, setEditForm] = useState({
         vision: "",
         newMission: "",
@@ -64,62 +65,111 @@ const DashboardPage = () => {
         history: ""
     });
 
-    // Load data saat komponen mount
+    // Fungsi untuk memuat data dari server
+    const loadData = async () => {
+        try {
+            setIsLoading(true);
+
+            // Load data sejarah
+            const historyResponse = await HistoryService.getHistory();
+            setHistoryData({
+                id: historyResponse.data.id,
+                text: historyResponse.data.text_history || "Sejarah sekolah belum tersedia",
+                author: historyResponse.data.author,
+                createdAt: historyResponse.data.created_at,
+                updatedAt: historyResponse.data.updated_at
+            });
+
+            // Load data visi misi
+            const visiMisiResponse = await VisiMisiService.getVisiMisi();
+            setVisiMisiData({
+                id: visiMisiResponse.data.id,
+                visi: visiMisiResponse.data.text_visi || "Visi sekolah belum tersedia",
+                misi: Array.isArray(visiMisiResponse.data.text_misi) ?
+                    visiMisiResponse.data.text_misi :
+                    [visiMisiResponse.data.text_misi || "Misi sekolah belum tersedia"],
+                tujuan: Array.isArray(visiMisiResponse.data.text_tujuan) ?
+                    visiMisiResponse.data.text_tujuan :
+                    [visiMisiResponse.data.text_tujuan || "Tujuan sekolah belum tersedia"],
+                author: visiMisiResponse.data.author,
+                createdAt: visiMisiResponse.data.created_at,
+                updatedAt: visiMisiResponse.data.updated_at
+            });
+
+            // Set nilai awal form edit
+            setEditForm({
+                vision: visiMisiResponse.data.text_visi || "",
+                newMission: "",
+                missions: Array.isArray(visiMisiResponse.data.text_misi) ?
+                    visiMisiResponse.data.text_misi :
+                    [visiMisiResponse.data.text_misi || ""],
+                newGoal: "",
+                goals: Array.isArray(visiMisiResponse.data.text_tujuan) ?
+                    visiMisiResponse.data.text_tujuan :
+                    [visiMisiResponse.data.text_tujuan || ""],
+                history: historyResponse.data.text_history || ""
+            });
+
+            setIsLoading(false);
+        } catch (error) {
+            console.error("Gagal memuat data:", error);
+            toast.error("Gagal memuat data");
+            setIsLoading(false);
+        }
+    };
+
+    // Efek untuk memuat data saat komponen pertama kali render
     useEffect(() => {
-        const loadData = async () => {
-            try {
-                setIsLoading(true);
-
-                // Load history data
-                const historyResponse = await HistoryService.getHistory();
-                setHistoryData({
-                    id: historyResponse.data.id,
-                    text: historyResponse.data.text_history || "Sejarah sekolah belum tersedia",
-                    author: historyResponse.data.author,
-                    createdAt: historyResponse.data.created_at
-                });
-
-                // Set initial edit form
-                setEditForm(prev => ({
-                    ...prev,
-                    history: historyResponse.data.text_history || ""
-                }));
-
-                setIsLoading(false);
-            } catch (error) {
-                console.error("Gagal memuat data:", error);
-                toast.error("Gagal memuat data");
-                setIsLoading(false);
-            }
-        };
-
         loadData();
     }, []);
 
-    // Fungsi untuk memulai edit
+    // Fungsi untuk memulai mode editing
     const startEditing = (section) => {
         setEditForm({
-            vision: schoolData.vision,
-            missions: [...schoolData.missions],
-            goals: [...schoolData.goals],
+            vision: visiMisiData.visi,
+            newMission: "",
+            missions: Array.isArray(visiMisiData.misi) ? [...visiMisiData.misi] : [visiMisiData.misi],
+            newGoal: "",
+            goals: Array.isArray(visiMisiData.tujuan) ? [...visiMisiData.tujuan] : [visiMisiData.tujuan],
             history: historyData?.text || ""
         });
         setIsEditing(section);
     };
 
-    // Fungsi untuk menyimpan edit visi, misi, tujuan
-    const saveVisionMission = () => {
-        setSchoolData({
-            ...schoolData,
-            vision: editForm.vision,
-            missions: editForm.missions,
-            goals: editForm.goals
-        });
-        setIsEditing(false);
-        toast.success("Visi, Misi & Tujuan berhasil diperbarui");
+    // Fungsi untuk menyimpan perubahan visi, misi, dan tujuan
+    const saveVisionMission = async () => {
+        try {
+            // Kirim data ke server
+            const response = await VisiMisiService.updateVisiMisi({
+                text_visi: editForm.vision,
+                text_misi: editForm.missions,
+                text_tujuan: editForm.goals
+            });
+
+            // Update state dengan data terbaru dari server
+            setVisiMisiData({
+                id: response.data.id,
+                visi: response.data.text_visi,
+                misi: Array.isArray(response.data.text_misi) ?
+                    response.data.text_misi :
+                    [response.data.text_misi],
+                tujuan: Array.isArray(response.data.text_tujuan) ?
+                    response.data.text_tujuan :
+                    [response.data.text_tujuan],
+                author: response.data.author,
+                createdAt: response.data.created_at,
+                updatedAt: response.data.updated_at
+            });
+
+            setIsEditing(false);
+            toast.success("Visi, Misi & Tujuan berhasil diperbarui");
+        } catch (error) {
+            console.error("Gagal memperbarui visi misi:", error);
+            toast.error("Gagal memperbarui visi dan misi");
+        }
     };
 
-    // Fungsi untuk menyimpan edit sejarah
+    // Fungsi untuk menyimpan perubahan sejarah
     const saveHistoryEdit = async () => {
         try {
             const response = await HistoryService.updateHistory({
@@ -130,7 +180,8 @@ const DashboardPage = () => {
                 id: response.data.id,
                 text: editForm.history,
                 author: response.data.author,
-                createdAt: response.data.created_at
+                createdAt: response.data.created_at,
+                updatedAt: response.data.updated_at
             });
 
             setIsEditing(false);
@@ -141,51 +192,60 @@ const DashboardPage = () => {
         }
     };
 
-    // Fungsi untuk menambah item
+    // Fungsi untuk menambahkan item baru (misi/tujuan)
     const addItem = (type) => {
-        if (type === 'mission' && editForm.newMission) {
-            setEditForm({
-                ...editForm,
-                missions: [...editForm.missions, editForm.newMission],
+        if (type === 'mission' && editForm.newMission.trim()) {
+            setEditForm(prev => ({
+                ...prev,
+                missions: [...prev.missions, prev.newMission.trim()],
                 newMission: ""
-            });
-        } else if (type === 'goal' && editForm.newGoal) {
-            setEditForm({
-                ...editForm,
-                goals: [...editForm.goals, editForm.newGoal],
+            }));
+        } else if (type === 'goal' && editForm.newGoal.trim()) {
+            setEditForm(prev => ({
+                ...prev,
+                goals: [...prev.goals, prev.newGoal.trim()],
                 newGoal: ""
-            });
+            }));
         }
     };
 
-    // Fungsi untuk menghapus item
+    // Fungsi untuk menghapus item (misi/tujuan)
     const removeItem = (type, index) => {
         if (type === 'mission') {
-            const updated = [...editForm.missions];
-            updated.splice(index, 1);
-            setEditForm({ ...editForm, missions: updated });
+            setEditForm(prev => {
+                const updatedMissions = [...prev.missions];
+                updatedMissions.splice(index, 1);
+                return { ...prev, missions: updatedMissions };
+            });
         } else if (type === 'goal') {
-            const updated = [...editForm.goals];
-            updated.splice(index, 1);
-            setEditForm({ ...editForm, goals: updated });
+            setEditForm(prev => {
+                const updatedGoals = [...prev.goals];
+                updatedGoals.splice(index, 1);
+                return { ...prev, goals: updatedGoals };
+            });
         }
     };
 
+    // Tampilkan loading spinner jika data sedang dimuat
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-screen">
                 <Spinner className="h-12 w-12" />
+                <Typography variant="paragraph" className="ml-4">
+                    Memuat data...
+                </Typography>
             </div>
         );
     }
 
     return (
         <div className="container mx-auto p-4">
+            {/* Header */}
             <Typography variant="h2" className="text-2xl font-bold mb-6 text-gray-800">
                 Profil Sekolah
             </Typography>
 
-            {/* Stats Cards - Bagian Count Data */}
+            {/* Statistik */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 {stats.map((stat, index) => (
                     <Card key={index}>
@@ -206,7 +266,7 @@ const DashboardPage = () => {
                 ))}
             </div>
 
-            {/* Navigation Tabs */}
+            {/* Tab Navigasi */}
             <Tabs value={activeTab} className="mb-8">
                 <TabsHeader>
                     <Tab value="vision-mission" onClick={() => setActiveTab("vision-mission")}>
@@ -224,11 +284,12 @@ const DashboardPage = () => {
                 </TabsHeader>
             </Tabs>
 
-            {/* Visi Misi Tujuan Section */}
+            {/* Konten Tab Visi, Misi & Tujuan */}
             {activeTab === "vision-mission" && (
                 <Card className="mb-6">
                     <CardBody>
                         {isEditing !== "vision-mission" ? (
+                            /* Mode Tampilan */
                             <>
                                 <div className="flex justify-between items-center mb-4">
                                     <Typography variant="h4" className="font-bold">
@@ -245,42 +306,69 @@ const DashboardPage = () => {
                                     </Button>
                                 </div>
 
+                                {/* Bagian Visi */}
                                 <div className="mb-8">
                                     <Typography variant="h5" className="mb-2 font-semibold">
                                         Visi
                                     </Typography>
                                     <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                                        <Typography>{schoolData.vision}</Typography>
+                                        <Typography>{visiMisiData.visi}</Typography>
                                     </div>
                                 </div>
 
+                                {/* Bagian Misi */}
                                 <div className="mb-8">
                                     <Typography variant="h5" className="mb-2 font-semibold">
                                         Misi
                                     </Typography>
                                     <div className="bg-blue-50 p-4 rounded-lg mb-4">
                                         <ul className="list-disc pl-5 space-y-2">
-                                            {schoolData.missions.map((mission, index) => (
-                                                <li key={index}>{mission}</li>
-                                            ))}
+                                            {Array.isArray(visiMisiData.misi) ?
+                                                visiMisiData.misi.map((mission, index) => (
+                                                    <li key={index}>{mission}</li>
+                                                )) :
+                                                <li>{visiMisiData.misi || "Tidak ada misi"}</li>
+                                            }
                                         </ul>
                                     </div>
                                 </div>
 
-                                <div>
+                                {/* Bagian Tujuan */}
+                                <div className="mb-4">
                                     <Typography variant="h5" className="mb-2 font-semibold">
                                         Tujuan
                                     </Typography>
                                     <div className="bg-blue-50 p-4 rounded-lg">
                                         <ul className="list-disc pl-5 space-y-2">
-                                            {schoolData.goals.map((goal, index) => (
-                                                <li key={index}>{goal}</li>
-                                            ))}
+                                            {Array.isArray(visiMisiData.tujuan) ?
+                                                visiMisiData.tujuan.map((goal, index) => (
+                                                    <li key={index}>{goal}</li>
+                                                )) :
+                                                <li>{visiMisiData.tujuan || "Tidak ada tujuan"}</li>
+                                            }
                                         </ul>
                                     </div>
                                 </div>
+
+                                {/* Informasi Pembaruan Terakhir */}
+                                {visiMisiData.author && (
+                                    <div className="flex items-center gap-2 text-gray-500 text-sm mt-4">
+                                        <UserCircleIcon className="h-4 w-4" />
+                                        <span>
+                                            Terakhir diperbarui oleh: {visiMisiData.author} •
+                                            {new Date(visiMisiData.updatedAt || visiMisiData.createdAt).toLocaleDateString('id-ID', {
+                                                day: 'numeric',
+                                                month: 'long',
+                                                year: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })}
+                                        </span>
+                                    </div>
+                                )}
                             </>
                         ) : (
+                            /* Mode Edit */
                             <>
                                 <div className="flex justify-between items-center mb-4">
                                     <Typography variant="h4" className="font-bold">
@@ -309,6 +397,7 @@ const DashboardPage = () => {
                                     </div>
                                 </div>
 
+                                {/* Edit Visi */}
                                 <div className="mb-6">
                                     <Typography variant="h5" className="mb-2 font-semibold">
                                         Visi
@@ -317,9 +406,14 @@ const DashboardPage = () => {
                                         label="Visi Sekolah"
                                         value={editForm.vision}
                                         onChange={(e) => setEditForm({ ...editForm, vision: e.target.value })}
+                                        className="mb-2"
                                     />
+                                    <Typography variant="small" className="text-gray-500">
+                                        Tuliskan visi sekolah dengan jelas dan inspiratif
+                                    </Typography>
                                 </div>
 
+                                {/* Edit Misi */}
                                 <div className="mb-6">
                                     <Typography variant="h5" className="mb-2 font-semibold">
                                         Misi
@@ -341,17 +435,27 @@ const DashboardPage = () => {
                                             </div>
                                         ))}
                                     </div>
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-2 mb-2">
                                         <Input
                                             label="Tambah Misi Baru"
                                             value={editForm.newMission}
                                             onChange={(e) => setEditForm({ ...editForm, newMission: e.target.value })}
+                                            className="flex-grow"
                                         />
-                                        <Button onClick={() => addItem('mission')}>Tambah</Button>
+                                        <Button
+                                            onClick={() => addItem('mission')}
+                                            disabled={!editForm.newMission.trim()}
+                                        >
+                                            Tambah
+                                        </Button>
                                     </div>
+                                    <Typography variant="small" className="text-gray-500">
+                                        Tambahkan misi sekolah satu per satu
+                                    </Typography>
                                 </div>
 
-                                <div>
+                                {/* Edit Tujuan */}
+                                <div className="mb-4">
                                     <Typography variant="h5" className="mb-2 font-semibold">
                                         Tujuan
                                     </Typography>
@@ -372,14 +476,23 @@ const DashboardPage = () => {
                                             </div>
                                         ))}
                                     </div>
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-2 mb-2">
                                         <Input
                                             label="Tambah Tujuan Baru"
                                             value={editForm.newGoal}
                                             onChange={(e) => setEditForm({ ...editForm, newGoal: e.target.value })}
+                                            className="flex-grow"
                                         />
-                                        <Button onClick={() => addItem('goal')}>Tambah</Button>
+                                        <Button
+                                            onClick={() => addItem('goal')}
+                                            disabled={!editForm.newGoal.trim()}
+                                        >
+                                            Tambah
+                                        </Button>
                                     </div>
+                                    <Typography variant="small" className="text-gray-500">
+                                        Tambahkan tujuan yang ingin dicapai sekolah
+                                    </Typography>
                                 </div>
                             </>
                         )}
@@ -387,11 +500,12 @@ const DashboardPage = () => {
                 </Card>
             )}
 
-            {/* Sejarah Sekolah Section */}
+            {/* Konten Tab Sejarah Sekolah */}
             {activeTab === "history" && (
                 <Card>
                     <CardBody>
                         {isEditing !== "history" ? (
+                            /* Mode Tampilan */
                             <>
                                 <div className="flex justify-between items-center mb-4">
                                     <Typography variant="h4" className="font-bold">
@@ -418,7 +532,8 @@ const DashboardPage = () => {
                                     <div className="flex items-center gap-2 text-gray-500 text-sm">
                                         <UserCircleIcon className="h-4 w-4" />
                                         <span>
-                                            Terakhir diperbarui pada tanggal : {new Date(historyData.createdAt).toLocaleDateString('id-ID', {
+                                            Terakhir diperbarui oleh: {historyData.author} •
+                                            {new Date(historyData.updatedAt || historyData.createdAt).toLocaleDateString('id-ID', {
                                                 day: 'numeric',
                                                 month: 'long',
                                                 year: 'numeric',
@@ -430,6 +545,7 @@ const DashboardPage = () => {
                                 )}
                             </>
                         ) : (
+                            /* Mode Edit */
                             <>
                                 <div className="flex justify-between items-center mb-4">
                                     <Typography variant="h4" className="font-bold">
@@ -467,7 +583,12 @@ const DashboardPage = () => {
                                 />
 
                                 <Typography variant="small" className="text-gray-500">
-                                    Tips: Gunakan format paragraf yang jelas dengan jarak antar paragraf
+                                    Tips:
+                                    <ul className="list-disc pl-5 mt-1">
+                                        <li>Gunakan format paragraf yang jelas</li>
+                                        <li>Ceritakan sejarah sekolah secara kronologis</li>
+                                        <li>Sertakan pencapaian penting sekolah</li>
+                                    </ul>
                                 </Typography>
                             </>
                         )}

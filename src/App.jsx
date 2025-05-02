@@ -11,7 +11,7 @@ import VisiMisiPage from './pages/user/VisiMisiPage'
 import HeadSpeechPage from './pages/user/HeadSpeechPage'
 import LoginPage from './pages/admin/LoginPage'
 import ManagePostPage from './pages/admin/ManagePostPage'
-import ManagePanoramaPage from './pages/admin/ManagePanoramaPage'
+import ManageVirtualTourPage from './pages/admin/ManageVirtualTourPage'
 import LayoutAdmin from './components/admin/LayoutAdmin'
 import DashboardPage from './pages/admin/DashboardPage'
 import ManageTeacherPage from './pages/admin/ManageTeacherPage'
@@ -73,10 +73,10 @@ function App() {
           }
         />
         <Route
-          path="kelola-panorama"
+          path="kelola-virtual-tour"
           element={
             <RequireAuth allowedRoles={['superadmin']} >
-              <ManagePanoramaPage path="panorama" />
+              <ManageVirtualTourPage path="kelola-virtual-tour" />
             </RequireAuth>
           }
         />

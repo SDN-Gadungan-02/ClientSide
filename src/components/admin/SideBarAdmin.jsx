@@ -66,7 +66,7 @@ const SideBarAdmin = () => {
         {
             name: 'Kelola Panorama',
             icon: <GlobeAltIcon className="h-5 w-5" />,
-            path: '/admin/kelola-panorama',
+            path: '/admin/kelola-virtual-tour',
             roles: ['superadmin']
         }
     ];

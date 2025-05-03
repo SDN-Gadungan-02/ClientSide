@@ -3,7 +3,7 @@ import { Pannellum } from 'pannellum-react';
 import {
     Card, CardBody, Typography, Button, Input, Dialog,
     DialogHeader, DialogBody, DialogFooter, Chip, Select, Option,
-    IconButton, Tooltip
+    IconButton, Tooltip, Textarea
 } from "@material-tailwind/react";
 import {
     PencilIcon, TrashIcon, PlusIcon, EyeIcon,
@@ -31,27 +31,26 @@ const ManageVirtualTourPage = () => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState('');
     const pannellumRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     // Load initial data
     useEffect(() => {
         loadPanoramas();
     }, []);
 
-    // Service wrappers
     const loadPanoramas = async () => {
         try {
-            const data = await VirtualTourService.getPanoramas();
-            setPanoramas(data);
+            const response = await VirtualTourService.getPanoramas();
+            const panoramasWithHotspots = response.data.map(panorama => ({
+                ...panorama,
+                hotspots: panorama.hotspots || []
+            }));
+            setPanoramas(panoramasWithHotspots);
         } catch (error) {
             console.error("Failed to load panoramas:", error);
-            setUploadError("Failed to load panoramas");
+            setPanoramas([]);
+            setUploadError("Failed to load panoramas. Please try again.");
         }
-    };
-
-    const savePanorama = async (payload) => {
-        return selectedPanorama?.id
-            ? VirtualTourService.updatePanorama(selectedPanorama.id, payload)
-            : VirtualTourService.createPanorama(payload);
     };
 
     // Handlers
@@ -60,7 +59,6 @@ const ManageVirtualTourPage = () => {
         if (!file) return;
 
         setSelectedFile(file);
-
         const reader = new FileReader();
         reader.onloadend = () => {
             setPreviewUrl(reader.result);
@@ -73,11 +71,24 @@ const ManageVirtualTourPage = () => {
     };
 
     const handleSelectPanorama = (panorama) => {
+        const formattedHotspots = (panorama.hotspots || []).map(hotspot => ({
+            id: hotspot.id,
+            pitch: hotspot.pitch,
+            yaw: hotspot.yaw,
+            type: hotspot.type || "info",
+            text: hotspot.name || hotspot.title || "Hotspot",
+            description: hotspot.deskripsi || "Description",
+            targetPanoramaId: hotspot.targetpanoramald || null,
+            isNavigation: hotspot.type === "scene"
+        }));
+
         setSelectedPanorama(panorama);
         setFormData({
             nama_ruangan: panorama.nama_ruangan,
-            gambar_panorama: panorama.gambar_panorama,
-            hotspots: panorama.hotspots || []
+            gambar_panorama: panorama.gambar_panorama.startsWith('/uploads')
+                ? `/static${panorama.gambar_panorama}`
+                : panorama.gambar_panorama,
+            hotspots: formattedHotspots
         });
         setPreviewMode(false);
         setSelectedFile(null);
@@ -103,8 +114,10 @@ const ManageVirtualTourPage = () => {
             pitch: e.data.pitch,
             yaw: e.data.yaw,
             type: "info",
-            text: "Hotspot Baru",
-            targetPanoramaId: null
+            text: "New Hotspot",
+            description: "Description here",
+            targetPanoramaId: null,
+            isNavigation: false
         };
 
         setFormData(prev => ({
@@ -137,34 +150,57 @@ const ManageVirtualTourPage = () => {
             setIsUploading(true);
             setUploadError(null);
 
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setUploadError('Please login first');
+                return;
+            }
+
             const payload = new FormData();
             payload.append('nama_ruangan', formData.nama_ruangan);
 
-            // Append each hotspot individually
-            formData.hotspots.forEach((hotspot, index) => {
-                payload.append(`hotspots[${index}][pitch]`, hotspot.pitch);
-                payload.append(`hotspots[${index}][yaw]`, hotspot.yaw);
-                payload.append(`hotspots[${index}][targetPanoramaId]`, hotspot.targetPanoramaId || '');
-                payload.append(`hotspots[${index}][name]`, hotspot.name || '');
-                payload.append(`hotspots[${index}][title]`, hotspot.title || '');
-                payload.append(`hotspots[${index}][deskripsi]`, hotspot.deskripsi || '');
-            });
+            if (formData.hotspots.length > 0) {
+                payload.append('hotspots', JSON.stringify(formData.hotspots));
+            }
 
             if (selectedFile) {
                 payload.append('gambar_panorama', selectedFile);
             }
 
-            const response = selectedPanorama?.id
-                ? await VirtualTourService.updateVirtualTour(selectedPanorama.id, payload)
-                : await VirtualTourService.createVirtualTour(payload);
+            let response;
+            if (selectedPanorama?.id) {
+                response = await VirtualTourService.updateVirtualTour(selectedPanorama.id, payload);
+            } else {
+                response = await VirtualTourService.createVirtualTour(payload);
+            }
 
             if (response.success) {
+                if (formData.hotspots.length > 0 && response.data.id) {
+                    await Promise.all(
+                        formData.hotspots.map(hotspot =>
+                            VirtualTourService.createHotspot(response.data.id, {
+                                pitch: hotspot.pitch,
+                                yaw: hotspot.yaw,
+                                targetPanoramaId: hotspot.targetPanoramaId,
+                                name: hotspot.text,
+                                title: hotspot.text,
+                                deskripsi: hotspot.description,
+                                type: hotspot.isNavigation ? "scene" : "info"
+                            })
+                        )
+                    );
+                }
+
                 loadPanoramas();
                 setEditMode(false);
             }
         } catch (error) {
-            console.error("Upload failed:", error);
-            setUploadError(error.response?.data?.message || "Upload failed");
+            let errorMessage = "Upload failed";
+            if (error.response) {
+                errorMessage = error.response.data?.message || errorMessage;
+            }
+            setUploadError(errorMessage);
+            console.error("Full error:", error);
         } finally {
             setIsUploading(false);
         }
@@ -182,18 +218,29 @@ const ManageVirtualTourPage = () => {
         }
     };
 
-    // Sub-components
+    // Hotspot Form Component
     const HotspotForm = () => (
         <div className="space-y-4 p-4 border rounded-lg">
             <Typography variant="h6">Edit Hotspot</Typography>
+
             <Input
-                label="Hotspot Text"
+                label="Hotspot Title"
                 value={activeHotspot?.text || ''}
                 onChange={(e) => handleUpdateHotspot({
                     ...activeHotspot,
                     text: e.target.value
                 })}
             />
+
+            <Textarea
+                label="Description"
+                value={activeHotspot?.description || ''}
+                onChange={(e) => handleUpdateHotspot({
+                    ...activeHotspot,
+                    description: e.target.value
+                })}
+            />
+
             <div className="grid grid-cols-2 gap-4">
                 <Input
                     type="number"
@@ -214,17 +261,38 @@ const ManageVirtualTourPage = () => {
                     })}
                 />
             </div>
+
             <Select
                 label="Hotspot Type"
                 value={activeHotspot?.type || 'info'}
                 onChange={(value) => handleUpdateHotspot({
                     ...activeHotspot,
-                    type: value
+                    type: value,
+                    isNavigation: value === 'scene'
                 })}
             >
-                <Option value="info">Info</Option>
+                <Option value="info">Information</Option>
                 <Option value="scene">Navigation</Option>
             </Select>
+
+            {activeHotspot?.isNavigation && (
+                <Select
+                    label="Target Panorama"
+                    value={activeHotspot?.targetPanoramaId || ''}
+                    onChange={(value) => handleUpdateHotspot({
+                        ...activeHotspot,
+                        targetPanoramaId: value
+                    })}
+                >
+                    <Option value="">Select Target</Option>
+                    {panoramas.filter(p => p.id !== selectedPanorama?.id).map(p => (
+                        <Option key={p.id} value={p.id}>
+                            {p.nama_ruangan}
+                        </Option>
+                    ))}
+                </Select>
+            )}
+
             <Button
                 color="red"
                 variant="outlined"
@@ -236,10 +304,66 @@ const ManageVirtualTourPage = () => {
         </div>
     );
 
-    const PreviewPane = () => (
-        <div className="h-full border rounded-lg overflow-hidden relative">
-            {formData.gambar_panorama ? (
-                <>
+    // Preview Pane Component with enhanced hotspot handling
+    const PreviewPane = () => {
+        const getHotspotConfig = (hotspot) => {
+            const baseConfig = {
+                pitch: hotspot.pitch,
+                yaw: hotspot.yaw,
+                cssClass: 'custom-hotspot',
+                createTooltipFunc: hotspotPanel,
+                createTooltipArgs: hotspot
+            };
+
+            if (hotspot.isNavigation && hotspot.targetPanoramaId) {
+                return {
+                    ...baseConfig,
+                    type: 'scene',
+                    sceneId: hotspot.targetPanoramaId,
+                    text: hotspot.text
+                };
+            } else {
+                return {
+                    ...baseConfig,
+                    type: 'info',
+                    text: `
+                        <div class="hotspot-info">
+                            <h3>${hotspot.text}</h3>
+                            <p>${hotspot.description}</p>
+                            ${hotspot.targetPanoramaId ?
+                            `<button class="nav-button" data-scene="${hotspot.targetPanoramaId}">
+                                    Go to Room
+                                </button>` : ''}
+                        </div>
+                    `
+                };
+            }
+        };
+
+        const hotspotPanel = (hotspotDiv, hotspot) => {
+            hotspotDiv.innerHTML = `
+                <div class="hotspot-content">
+                    <h3>${hotspot.text}</h3>
+                    <p>${hotspot.description}</p>
+                    ${hotspot.targetPanoramaId ?
+                    `<button class="nav-button" data-scene="${hotspot.targetPanoramaId}">
+                            Go to Room
+                        </button>` : ''}
+                </div>
+            `;
+
+            if (hotspot.targetPanoramaId) {
+                hotspotDiv.querySelector('.nav-button').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const target = panoramas.find(p => p.id === hotspot.targetPanoramaId);
+                    if (target) handleSelectPanorama(target);
+                });
+            }
+        };
+
+        return (
+            <div className="h-full border rounded-lg overflow-hidden relative">
+                {formData.gambar_panorama ? (
                     <Pannellum
                         ref={pannellumRef}
                         width="100%"
@@ -247,24 +371,25 @@ const ManageVirtualTourPage = () => {
                         image={formData.gambar_panorama}
                         autoLoad
                         showZoomCtrl={true}
-                        hotSpots={formData.hotspots}
+                        hotSpots={formData.hotspots.map(getHotspotConfig)}
                         hotspotDebug={editMode}
                         onMouseDown={editMode ? handleAddHotspot : undefined}
                     />
-                    {editMode && (
-                        <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white p-2 rounded">
-                            Click on image to add hotspot
-                        </div>
-                    )}
-                </>
-            ) : (
-                <div className="h-full flex items-center justify-center bg-gray-100">
-                    <Typography>Upload panorama image for preview</Typography>
-                </div>
-            )}
-        </div>
-    );
+                ) : (
+                    <div className="h-full flex items-center justify-center bg-gray-100">
+                        <Typography>Upload panorama image for preview</Typography>
+                    </div>
+                )}
+                {editMode && formData.gambar_panorama && (
+                    <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white p-2 rounded">
+                        Click on image to add hotspot
+                    </div>
+                )}
+            </div>
+        );
+    };
 
+    // Main render
     return (
         <div className="container mx-auto p-4">
             <Typography variant="h2" className="text-2xl font-bold mb-6">
@@ -365,21 +490,22 @@ const ManageVirtualTourPage = () => {
                                                 id="panorama-upload"
                                                 accept="image/*"
                                                 onChange={handleFileChange}
+                                                ref={fileInputRef}
                                                 className="hidden"
                                                 disabled={isUploading}
                                             />
-                                            <label htmlFor="panorama-upload" className="cursor-pointer">
-                                                <Button
-                                                    variant="outlined"
-                                                    color="blue"
-                                                    fullWidth
-                                                    className="flex items-center gap-2"
-                                                    disabled={isUploading}
-                                                >
-                                                    <PhotoIcon className="h-5 w-5" />
-                                                    Upload Panorama Image
-                                                </Button>
-                                            </label>
+                                            <Button
+                                                variant="outlined"
+                                                color="blue"
+                                                fullWidth
+                                                className="flex items-center gap-2"
+                                                disabled={isUploading}
+                                                onClick={() => fileInputRef.current.click()}
+                                                type="button"
+                                            >
+                                                <PhotoIcon className="h-5 w-5" />
+                                                Upload Panorama Image
+                                            </Button>
 
                                             {previewUrl && (
                                                 <div className="mt-2">

@@ -3,10 +3,23 @@ import api from '../utils/api';
 const VirtualTourService = {
     getPanoramas: async (search = '') => {
         try {
-            const response = await api.get(`/virtualtour?search=${encodeURIComponent(search)}`);
-            return response.data;
+            const response = await api.get('/virtualtour', {
+                params: { search }
+            });
+            return response.data.data || []; // Akses properti data yang benar
         } catch (error) {
-            throw error;
+            console.error('Error fetching panoramas:', error);
+            return [];
+        }
+    },
+
+    getHotspots: async (panoramaId) => {
+        try {
+            const response = await api.get(`/virtualtour/${panoramaId}/hotspots`);
+            return response.data.data || [];
+        } catch (error) {
+            console.error('Error fetching hotspots:', error);
+            return [];
         }
     },
 
@@ -19,15 +32,27 @@ const VirtualTourService = {
         }
     },
 
+    // services/virtualtourService.js
     createVirtualTour: async (formData) => {
         try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+
             const response = await api.post('/virtualtour', formData, {
                 headers: {
-                    'Content-Type': 'multipart/form-data'
+                    'Content-Type': 'multipart/form-data',
+                    'Authorization': `Bearer ${token}`
                 }
             });
             return response.data;
         } catch (error) {
+            console.error('Error details:', {
+                status: error.response?.status,
+                data: error.response?.data,
+                message: error.message
+            });
             throw error;
         }
     },
@@ -53,11 +78,12 @@ const VirtualTourService = {
         }
     },
 
-    createVirtualTour: async (formData) => {
+    // services/virtualtourService.js
+    createHotspot: async (panoramaId, hotspotData) => {
         try {
-            const response = await api.post('/virtualtour', formData, {
+            const response = await api.post(`/virtualtour/${panoramaId}/hotspots`, hotspotData, {
                 headers: {
-                    'Content-Type': 'multipart/form-data'
+                    'Content-Type': 'application/json'
                 }
             });
             return response.data;
@@ -84,4 +110,4 @@ const VirtualTourService = {
     }
 };
 
-export default VirtualTourService;
+export default VirtualTourService

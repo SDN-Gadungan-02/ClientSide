@@ -5,7 +5,6 @@ import { Typography, Card, CardBody } from "@material-tailwind/react";
 const VirtualTourPage = () => {
     const [currentScene, setCurrentScene] = useState(0);
 
-    // Daftar spot virtual tour
     const tourSpots = [
         {
             id: 1,

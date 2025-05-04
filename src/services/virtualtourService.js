@@ -6,10 +6,33 @@ const VirtualTourService = {
             const response = await api.get('/virtualtour', {
                 params: { search }
             });
-            return response.data.data || []; // Akses properti data yang benar
+
+            // Transform data with proper image URLs
+            const transformedData = response.data.data.map(panorama => ({
+                ...panorama,
+                gambar_panorama: panorama.gambar_panorama,
+                hotspots: panorama.hotspots.map(hotspot => ({
+                    id: hotspot.id,
+                    pitch: hotspot.pitch,
+                    yaw: hotspot.yaw,
+                    text: hotspot.name_deskripsi,
+                    description: hotspot.deskripsi,
+                    targetPanoramaId: hotspot.targetpanoramald,
+                    iconUrl: hotspot.iconUrl
+                }))
+            }));
+
+            return {
+                success: true,
+                data: transformedData
+            };
         } catch (error) {
             console.error('Error fetching panoramas:', error);
-            return [];
+            return {
+                success: false,
+                data: [],
+                message: error.response?.data?.message || 'Failed to load panoramas'
+            };
         }
     },
 
@@ -32,7 +55,6 @@ const VirtualTourService = {
         }
     },
 
-    // services/virtualtourService.js
     createVirtualTour: async (formData) => {
         try {
             const token = localStorage.getItem('token');
@@ -48,11 +70,7 @@ const VirtualTourService = {
             });
             return response.data;
         } catch (error) {
-            console.error('Error details:', {
-                status: error.response?.status,
-                data: error.response?.data,
-                message: error.message
-            });
+            console.error('Error details:', error);
             throw error;
         }
     },
@@ -61,43 +79,56 @@ const VirtualTourService = {
         try {
             const response = await api.put(`/virtualtour/${id}`, formData, {
                 headers: {
-                    'Content-Type': 'multipart/form-data'
+                    'Content-Type': 'multipart/form-data',
                 }
             });
             return response.data;
         } catch (error) {
+            console.error('Update Virtual Tour Error:', error);
             throw error;
         }
     },
 
+    // virtualtourService.js
     deleteVirtualTour: async (id) => {
         try {
-            await api.delete(`/virtualtour/${id}`);
+            const response = await api.delete(`/virtualtour/${id}`);
+            return response.data;
         } catch (error) {
-            throw error;
+            console.error('Error deleting virtual tour:', error);
+            throw new Error(error.response?.data?.message || 'Failed to delete virtual tour');
         }
     },
 
-    // services/virtualtourService.js
     createHotspot: async (panoramaId, hotspotData) => {
         try {
-            const response = await api.post(`/virtualtour/${panoramaId}/hotspots`, hotspotData, {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+            const response = await api.post(`/virtualtour/${panoramaId}/hotspots`, {
+                pitch: hotspotData.pitch,
+                yaw: hotspotData.yaw,
+                text: hotspotData.text,
+                description: hotspotData.description,
+                targetPanoramaId: hotspotData.targetPanoramaId || null
             });
             return response.data;
         } catch (error) {
-            throw error;
+            console.error('Error creating hotspot:', error);
+            throw new Error(error.response?.data?.message || 'Failed to create hotspot');
         }
     },
 
     updateHotspot: async (panoramaId, hotspotId, hotspotData) => {
         try {
-            const response = await api.put(`/virtualtour/${panoramaId}/hotspots/${hotspotId}`, hotspotData);
+            const response = await api.put(`/virtualtour/${panoramaId}/hotspots/${hotspotId}`, {
+                pitch: hotspotData.pitch,
+                yaw: hotspotData.yaw,
+                text: hotspotData.text,
+                description: hotspotData.description,
+                targetPanoramaId: hotspotData.targetPanoramaId || null
+            });
             return response.data;
         } catch (error) {
-            throw error;
+            console.error('Error updating hotspot:', error);
+            throw new Error(error.response?.data?.message || 'Failed to update hotspot');
         }
     },
 
@@ -110,4 +141,4 @@ const VirtualTourService = {
     }
 };
 
-export default VirtualTourService
+export default VirtualTourService;

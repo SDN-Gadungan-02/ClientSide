@@ -16,13 +16,13 @@ export const AuthProvider = ({ children }) => {
 
             if (result.success) {
                 setAuthState({
-                    user: result.user,  // Make sure this contains the full user object
+                    user: result.user,
                     loading: false,
                     error: null
                 });
                 return {
                     success: true,
-                    user: result.user  // Explicitly return the user object
+                    user: result.user
                 };
             } else {
                 setAuthState({
@@ -48,7 +48,6 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // AuthContext.jsx
     const initializeAuth = async () => {
         try {
             const token = localStorage.getItem('token');
@@ -57,14 +56,12 @@ export const AuthProvider = ({ children }) => {
                 return;
             }
 
-            // Set the header before making the verify request
             api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
             const { success, user } = await verify();
             if (success) {
                 setAuthState({ isAuthenticated: true, user });
             } else {
-                // Clear invalid token
                 localStorage.removeItem('token');
                 setAuthState({ isAuthenticated: false, user: null });
             }

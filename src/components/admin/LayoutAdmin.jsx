@@ -1,4 +1,3 @@
-// LayoutAdmin.jsx
 import { Outlet } from 'react-router-dom';
 import HeaderAdmin from './HeaderAdmin';
 import SidebarAdmin from './SidebarAdmin';

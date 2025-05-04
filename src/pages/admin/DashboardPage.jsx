@@ -28,7 +28,6 @@ import HistoryService from '../../services/historyService';
 import VisiMisiService from '../../services/visiMisiService';
 
 const DashboardPage = () => {
-    // State untuk tab aktif dan mode editing
     const [activeTab, setActiveTab] = useState("vision-mission");
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -41,10 +40,7 @@ const DashboardPage = () => {
         { title: "Aktivitas Terbaru", value: "5", icon: <ChartBarIcon className="h-6 w-6" />, color: "bg-purple-500" }
     ];
 
-    // State untuk data sejarah
     const [historyData, setHistoryData] = useState(null);
-
-    // State untuk data visi, misi, dan tujuan
     const [visiMisiData, setVisiMisiData] = useState({
         id: null,
         visi: "Memuat visi sekolah...",
@@ -55,7 +51,6 @@ const DashboardPage = () => {
         updatedAt: null
     });
 
-    // State untuk form editing
     const [editForm, setEditForm] = useState({
         vision: "",
         newMission: "",
@@ -65,12 +60,10 @@ const DashboardPage = () => {
         history: ""
     });
 
-    // Fungsi untuk memuat data dari server
     const loadData = async () => {
         try {
             setIsLoading(true);
 
-            // Load data sejarah
             const historyResponse = await HistoryService.getHistory();
             setHistoryData({
                 id: historyResponse.data.id,
@@ -80,7 +73,6 @@ const DashboardPage = () => {
                 updatedAt: historyResponse.data.updated_at
             });
 
-            // Load data visi misi
             const visiMisiResponse = await VisiMisiService.getVisiMisi();
             setVisiMisiData({
                 id: visiMisiResponse.data.id,
@@ -96,7 +88,6 @@ const DashboardPage = () => {
                 updatedAt: visiMisiResponse.data.updated_at
             });
 
-            // Set nilai awal form edit
             setEditForm({
                 vision: visiMisiResponse.data.text_visi || "",
                 newMission: "",
@@ -118,12 +109,10 @@ const DashboardPage = () => {
         }
     };
 
-    // Efek untuk memuat data saat komponen pertama kali render
     useEffect(() => {
         loadData();
     }, []);
 
-    // Fungsi untuk memulai mode editing
     const startEditing = (section) => {
         setEditForm({
             vision: visiMisiData.visi,
@@ -136,17 +125,14 @@ const DashboardPage = () => {
         setIsEditing(section);
     };
 
-    // Fungsi untuk menyimpan perubahan visi, misi, dan tujuan
     const saveVisionMission = async () => {
         try {
-            // Kirim data ke server
             const response = await VisiMisiService.updateVisiMisi({
                 text_visi: editForm.vision,
                 text_misi: editForm.missions,
                 text_tujuan: editForm.goals
             });
 
-            // Update state dengan data terbaru dari server
             setVisiMisiData({
                 id: response.data.id,
                 visi: response.data.text_visi,
@@ -169,7 +155,6 @@ const DashboardPage = () => {
         }
     };
 
-    // Fungsi untuk menyimpan perubahan sejarah
     const saveHistoryEdit = async () => {
         try {
             const response = await HistoryService.updateHistory({
@@ -192,7 +177,6 @@ const DashboardPage = () => {
         }
     };
 
-    // Fungsi untuk menambahkan item baru (misi/tujuan)
     const addItem = (type) => {
         if (type === 'mission' && editForm.newMission.trim()) {
             setEditForm(prev => ({
@@ -209,7 +193,6 @@ const DashboardPage = () => {
         }
     };
 
-    // Fungsi untuk menghapus item (misi/tujuan)
     const removeItem = (type, index) => {
         if (type === 'mission') {
             setEditForm(prev => {
@@ -226,7 +209,6 @@ const DashboardPage = () => {
         }
     };
 
-    // Tampilkan loading spinner jika data sedang dimuat
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-screen">
@@ -284,12 +266,10 @@ const DashboardPage = () => {
                 </TabsHeader>
             </Tabs>
 
-            {/* Konten Tab Visi, Misi & Tujuan */}
             {activeTab === "vision-mission" && (
                 <Card className="mb-6">
                     <CardBody>
                         {isEditing !== "vision-mission" ? (
-                            /* Mode Tampilan */
                             <>
                                 <div className="flex justify-between items-center mb-4">
                                     <Typography variant="h4" className="font-bold">
@@ -306,7 +286,6 @@ const DashboardPage = () => {
                                     </Button>
                                 </div>
 
-                                {/* Bagian Visi */}
                                 <div className="mb-8">
                                     <Typography variant="h5" className="mb-2 font-semibold">
                                         Visi
@@ -316,7 +295,6 @@ const DashboardPage = () => {
                                     </div>
                                 </div>
 
-                                {/* Bagian Misi */}
                                 <div className="mb-8">
                                     <Typography variant="h5" className="mb-2 font-semibold">
                                         Misi

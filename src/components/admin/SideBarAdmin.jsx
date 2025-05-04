@@ -19,15 +19,12 @@ const SideBarAdmin = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Ambil token dari localStorage
         const token = localStorage.getItem('token');
 
         if (!token) {
-            // Jika token tidak ada, redirect ke halaman login
             navigate('/login');
         } else {
             console.log('Token ditemukan:', token);
-            // Anda dapat menggunakan token ini untuk permintaan API
         }
     }, []);
 
@@ -75,7 +72,6 @@ const SideBarAdmin = () => {
 
     return (
         <div className="w-64 bg-gray-800 text-white flex flex-col h-full">
-            {/* Bagian Atas Sidebar */}
             <div className="flex-grow">
                 <div className="p-4 border-b border-gray-700 text-center">
                     <h2 className="text-xl font-semibold">SDN GADUNGAN 2</h2>
@@ -98,8 +94,6 @@ const SideBarAdmin = () => {
                     })}
                 </nav>
             </div>
-
-            {/* Bagian Bawah Sidebar (Logout) */}
             <div className="p-4 border-t border-gray-700">
                 <button
                     onClick={handleLogout}

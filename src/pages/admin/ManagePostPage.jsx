@@ -13,7 +13,6 @@ import {
 } from "@heroicons/react/24/solid";
 
 const ManagePostPage = () => {
-    // State Management
     const [state, setState] = useState({
         posts: [],
         loading: true,
@@ -39,14 +38,12 @@ const ManagePostPage = () => {
 
     const navigate = useNavigate();
 
-    // Derived values
     const {
         posts, loading, searchTerm, open, isEdit, currentPost,
         showFullDescription, imagePreview, imageFile, isSubmitting,
         deleteModalOpen, postToDelete
     } = state;
 
-    // Helper Functions
     const setStateValue = (key, value) => {
         setState(prev => ({ ...prev, [key]: value }));
     };
@@ -58,7 +55,6 @@ const ManagePostPage = () => {
         return `${window.location.origin}/${cleanPath}`;
     };
 
-    // API Handlers
     const fetchPosts = async () => {
         try {
             setStateValue("loading", true);
@@ -136,7 +132,6 @@ const ManagePostPage = () => {
         }
     };
 
-    // Event Handlers
     const handleOpen = () => {
         const newOpen = !open;
         setStateValue("open", newOpen);
@@ -196,7 +191,6 @@ const ManagePostPage = () => {
         });
     };
 
-    // Effects
     useEffect(() => {
         const debounceTimer = setTimeout(() => {
             fetchPosts();
@@ -205,7 +199,6 @@ const ManagePostPage = () => {
         return () => clearTimeout(debounceTimer);
     }, [searchTerm]);
 
-    // Render Functions
     const renderLoading = () => (
         <div className="flex justify-center items-center h-screen">
             <Spinner className="h-12 w-12" />

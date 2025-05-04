@@ -3,7 +3,6 @@
   padding: 0;
 }
 
-// Tambahkan di file CSS global atau modul CSS
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
@@ -11,4 +10,69 @@
 
 .animate-fadeIn {
   animation: fadeIn 1s ease-out forwards;
+}
+/* Custom hotspot styles */
+.custom-hotspot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.7);
+  border: 2px solid #4299e1;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.custom-hotspot.info {
+  background-color: rgba(255, 255, 0, 0.7);
+  border-color: #d69e2e;
+}
+
+.custom-hotspot.scene {
+  background-color: rgba(0, 255, 0, 0.7);
+  border-color: #38a169;
+}
+
+.custom-hotspot::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #4299e1;
+}
+
+.custom-hotspot.info::after {
+  background-color: #d69e2e;
+}
+
+.custom-hotspot.scene::after {
+  background-color: #38a169;
+}
+
+/* Hotspot styles */
+.pnlm-hotspot {
+  transition: all 0.3s ease;
+}
+
+.pnlm-hotspot.active-hotspot {
+  transform: scale(1.5);
+  z-index: 100;
+}
+
+.hotspot-scene .pnlm-hotspot-base {
+  background-color: rgba(59, 130, 246, 0.5);
+}
+
+.hotspot-info .pnlm-hotspot-base {
+  background-color: rgba(234, 179, 8, 0.5);
+}
+
+.pnlm-hotspot-tooltip {
+  font-size: 14px;
+  font-weight: bold;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 4px;
+  padding: 4px 8px;
+  white-space: nowrap;
 }

@@ -5,7 +5,6 @@ import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './components/auth/AuthContext';
 import './index.css';
 
-// Pastikan element dengan id 'root' ada di index.html
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
 root.render(

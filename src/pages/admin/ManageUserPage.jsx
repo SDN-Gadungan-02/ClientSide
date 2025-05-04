@@ -27,10 +27,9 @@ import {
 } from "@heroicons/react/24/solid";
 import { toast } from 'react-toastify';
 
-import api from '../../utils/api'; // Import your API instance
+import api from '../../utils/api';
 
 const ManageUserPage = () => {
-    // State Management
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [openModal, setOpenModal] = useState(false);
@@ -45,15 +44,13 @@ const ManageUserPage = () => {
     const [userToDelete, setUserToDelete] = useState(null);
     const [errors, setErrors] = useState({});
 
-    // Fetch users from API
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const response = await api.get('/users'); // Gunakan instance api yang sudah ada
+            const response = await api.get('/users');
             setUsers(response.data.data);
         } catch (error) {
             if (error.response?.status === 401) {
-                // Handle unauthorized
                 localStorage.removeItem('token');
                 window.location.href = '/login';
             }
@@ -68,12 +65,11 @@ const ManageUserPage = () => {
         fetchUsers();
     }, []);
 
-    // Buka Modal Tambah/Edit
     const handleOpenModal = (user = null) => {
         if (user) {
             setCurrentUser({
                 ...user,
-                password: '' // Clear password when editing
+                password: ''
             });
             setIsEditing(true);
         } else {
@@ -89,24 +85,20 @@ const ManageUserPage = () => {
         setOpenModal(true);
     };
 
-    // Tutup Modal
     const handleCloseModal = () => {
         setOpenModal(false);
     };
 
-    // Buka Modal Hapus
     const handleOpenDeleteModal = (id) => {
         setUserToDelete(id);
         setOpenDeleteModal(true);
     };
 
-    // Tutup Modal Hapus
     const handleCloseDeleteModal = () => {
         setOpenDeleteModal(false);
         setUserToDelete(null);
     };
 
-    // Handle Input Change
     const handleChange = (e) => {
         const { name, value } = e.target;
         setCurrentUser({
@@ -115,7 +107,6 @@ const ManageUserPage = () => {
         });
     };
 
-    // Validasi Form
     const validateForm = () => {
         const newErrors = {};
         if (!currentUser.username.trim()) newErrors.username = "Nama wajib diisi";
@@ -124,7 +115,6 @@ const ManageUserPage = () => {
         return newErrors;
     };
 
-    // Simpan Data
     const handleSaveUser = async () => {
         const formErrors = validateForm();
         if (Object.keys(formErrors).length > 0) {
@@ -134,12 +124,12 @@ const ManageUserPage = () => {
 
         try {
             if (isEditing) {
-                await axios.put(`${API_URL}/api/users/${currentUser.id}`, currentUser); // Added /users
+                await axios.put(`${API_URL}/api/users/${currentUser.id}`, currentUser);
             } else {
-                await axios.post(`${API_URL}/api/users`, currentUser); // Added /users
+                await axios.post(`${API_URL}/api/users`, currentUser);
             }
 
-            fetchUsers(); // Refresh user list
+            fetchUsers();
             handleCloseModal();
         } catch (error) {
             console.error('Error saving user:', error);
@@ -147,12 +137,11 @@ const ManageUserPage = () => {
         }
     };
 
-    // Hapus Data
     const handleDeleteUser = async () => {
         try {
             await axios.delete(`${API_URL}/api/users/${userToDelete}`)
             toast.success('User deleted successfully');
-            fetchUsers(); // Refresh user list
+            fetchUsers();
             handleCloseDeleteModal();
         } catch (error) {
             console.error('Error deleting user:', error);
@@ -162,7 +151,6 @@ const ManageUserPage = () => {
 
     return (
         <div className="container mx-auto p-4">
-            {/* Modal Tambah/Edit */}
             <Dialog open={openModal} handler={handleCloseModal} size="lg">
                 <DialogHeader>
                     {isEditing ? "Edit Pengguna" : "Tambah Pengguna Baru"}

@@ -3,7 +3,6 @@ import { Typography, Card, CardBody, Button, Chip } from "@material-tailwind/rea
 import { CalendarDaysIcon, UserCircleIcon, ArrowLeftIcon, ShareIcon, BookmarkIcon } from "@heroicons/react/24/outline";
 
 const DetailFeedPage = () => {
-    // Data contoh
     const postData = {
         title: "Prestasi Siswa SDN Gadungan 02 di Kompetisi Sains Nasional",
         thumbnail: "https://images.pexels.com/photos/371633/pexels-photo-371633.jpeg?cs=srgb&dl=clouds-country-daylight-371633.jpg&fm=jpg",

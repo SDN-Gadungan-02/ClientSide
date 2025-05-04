@@ -1,4 +1,3 @@
-// src/components/Layout.jsx
 import React from 'react';
 import HeaderUser from './HeaderUser';
 import FooterUser from './FooterUser';

@@ -1,4 +1,3 @@
-// src/components/ContactUser.jsx
 import React from "react";
 import {
     Typography,
@@ -18,7 +17,6 @@ import {
 export default function ContactUser() {
     return (
         <div className="relative py-20 overflow-hidden min-h-[600px]">
-            {/* Background Image dengan efek parallax - PERUBAHAN DI SINI */}
             <div
                 className="fixed inset-0 -z-10 bg-fixed bg-center bg-cover opacity-20"
                 style={{

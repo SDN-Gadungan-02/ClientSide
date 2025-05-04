@@ -4,7 +4,6 @@ const VisiMisiService = {
     getVisiMisi: async () => {
         try {
             const response = await api.get('/visimisi');
-            // Pastikan response.data memiliki struktur yang benar
             return {
                 ...response.data,
                 text_misi: Array.isArray(response.data.text_misi) ?

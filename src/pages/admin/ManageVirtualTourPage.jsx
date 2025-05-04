@@ -55,17 +55,6 @@ const HotspotModal = React.memo(({
         });
     };
 
-    const getHotspotIcon = (type) => {
-        switch (type) {
-            case 'scene':
-                return <ArrowRightIcon className="h-5 w-5 text-blue-500" />;
-            case 'info':
-                return <InformationCircleIcon className="h-5 w-5 text-yellow-500" />;
-            default:
-                return <InformationCircleIcon className="h-5 w-5" />;
-        }
-    };
-
     return (
         <Dialog open={show} handler={onClose}>
             <form onSubmit={handleSubmit}>
@@ -74,16 +63,13 @@ const HotspotModal = React.memo(({
                 </DialogHeader>
                 <DialogBody>
                     <div className="space-y-4">
-                        <div className="flex items-center gap-2">
-                            {getHotspotIcon(form.type)}
-                            <Input
-                                label="Judul Hotspot"
-                                value={form.text}
-                                onChange={(e) => setForm({ ...form, text: e.target.value })}
-                                autoFocus
-                                required
-                            />
-                        </div>
+                        <Input
+                            label="Judul Hotspot"
+                            value={form.text}
+                            onChange={(e) => setForm({ ...form, text: e.target.value })}
+                            autoFocus
+                            required
+                        />
 
                         <Textarea
                             label="Deskripsi"
@@ -116,13 +102,10 @@ const HotspotModal = React.memo(({
                             />
                         </div>
 
-
-
                         <Select
                             label="Target Panorama"
                             value={form.targetPanoramaId || ''}
                             onChange={(value) => setForm({ ...form, targetPanoramaId: value })}
-                            required={form.type === 'scene'}
                         >
                             <Option value="">Pilih Target</Option>
                             {panoramas.filter(p => p.id !== selectedPanorama?.id).map(p => (
@@ -131,7 +114,6 @@ const HotspotModal = React.memo(({
                                 </Option>
                             ))}
                         </Select>
-
                     </div>
                 </DialogBody>
                 <DialogFooter>
@@ -157,7 +139,7 @@ const HotspotModal = React.memo(({
                     <Button
                         color="blue"
                         type="submit"
-                        disabled={isSaving || !form.text.trim() || (form.type === 'scene' && !form.targetPanoramaId)}
+                        disabled={isSaving || !form.text.trim()}
                     >
                         {isSaving ? (
                             <span className="flex items-center">
@@ -395,20 +377,25 @@ const ManageVirtualTourPage = () => {
             id: hotspot.id,
             pitch: parseFloat(hotspot.pitch) || 0,
             yaw: parseFloat(hotspot.yaw) || 0,
-            text: hotspot.text || hotspot.name_deskripsi || "Hotspot",
-            description: hotspot.description || hotspot.deskripsi || "",
-            targetPanoramaId: hotspot.targetPanoramaId || hotspot.targetpanoramald || null,
-            type: hotspot.type || (hotspot.targetpanoramald ? 'scene' : 'info')
+            text: hotspot.text || "Hotspot",
+            description: hotspot.description || "",
+            targetPanoramaId: hotspot.targetPanoramaId || null
         }));
 
-        setSelectedPanorama(panorama);
+        setSelectedPanorama({
+            ...panorama,
+            hotspots: formattedHotspots
+        });
+
         setFormData({
             nama_ruangan: panorama.nama_ruangan,
             gambar_panorama: panorama.gambar_panorama,
             hotspots: formattedHotspots
         });
+
         setPreviewUrl(panorama.gambar_panorama);
         setEditMode(false);
+        setActiveHotspot(null);
     }, []);
 
 
@@ -489,7 +476,6 @@ const ManageVirtualTourPage = () => {
         try {
             setIsSavingHotspot(true);
 
-            // Validate required fields
             if (!updatedHotspot.text || !updatedHotspot.pitch || !updatedHotspot.yaw) {
                 throw new Error("Harap isi semua field yang wajib diisi");
             }
@@ -498,10 +484,6 @@ const ManageVirtualTourPage = () => {
                 throw new Error("Tidak ada panorama yang dipilih");
             }
 
-            // Check if we're working with a temporary panorama
-            const isTempPanorama = selectedPanorama.id.toString().startsWith('temp-');
-
-            // Prepare hotspot data
             const hotspotData = {
                 pitch: updatedHotspot.pitch,
                 yaw: updatedHotspot.yaw,
@@ -513,8 +495,7 @@ const ManageVirtualTourPage = () => {
             let savedHotspot;
             let panoramaId = selectedPanorama.id;
 
-            // If panorama is temporary, save it first to get a real ID
-            if (isTempPanorama) {
+            if (selectedPanorama.id.toString().startsWith('temp-')) {
                 const payload = new FormData();
                 payload.append('nama_ruangan', formData.nama_ruangan);
                 if (selectedFile) payload.append('gambar_panorama', selectedFile);
@@ -524,18 +505,21 @@ const ManageVirtualTourPage = () => {
                 setSelectedPanorama(panoramaResponse.data);
             }
 
-            // Save the hotspot
-            const response = await VirtualTourService.createHotspot(
-                panoramaId,
-                hotspotData
-            );
+            if (updatedHotspot.id) {
+                const response = await VirtualTourService.updateHotspot(
+                    panoramaId,
+                    updatedHotspot.id,
+                    hotspotData
+                );
+                savedHotspot = response.data;
+            } else {
+                const response = await VirtualTourService.createHotspot(
+                    panoramaId,
+                    hotspotData
+                );
+                savedHotspot = response.data;
+            }
 
-            savedHotspot = {
-                ...updatedHotspot,
-                id: response.data.id // Use the real ID from database
-            };
-
-            // Update state
             setFormData(prev => ({
                 ...prev,
                 hotspots: prev.hotspots.map(h =>
@@ -546,8 +530,7 @@ const ManageVirtualTourPage = () => {
             setActiveHotspot(savedHotspot);
             setShowHotspotModal(false);
 
-            // Refresh panorama list if we created a new panorama
-            if (isTempPanorama) {
+            if (selectedPanorama.id.toString().startsWith('temp-')) {
                 await loadPanoramas();
             }
         } catch (error) {
@@ -671,7 +654,7 @@ const ManageVirtualTourPage = () => {
                                 <div className="h-96">
                                     <PreviewPane
                                         pannellumRef={pannellumRef}
-                                        image={formData.gambar_panorama}
+                                        image={formData.gambar_panorama} // Pastikan ini berisi URL gambar yang valid
                                         hotspots={formData.hotspots}
                                         editMode={editMode}
                                         onAddHotspot={handleAddHotspot}
@@ -850,8 +833,8 @@ const ManageVirtualTourPage = () => {
                         pannellumRef={pannellumRef}
                         image={formData.gambar_panorama}
                         hotspots={formData.hotspots}
-                        editMode={editMode}
-                        onAddHotspot={handleAddHotspot}
+                        editMode={false} // Preview mode biasanya non-edit
+                        onAddHotspot={null}
                         panoramas={panoramas}
                         onSelectPanorama={handleSelectPanorama}
                     />

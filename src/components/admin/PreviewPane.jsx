@@ -18,16 +18,6 @@ const PreviewPane = ({
     const [activeHotspotId, setActiveHotspotId] = useState(null);
 
     // Get hotspot icon based on type
-    const getHotspotIcon = (type) => {
-        switch (type) {
-            case 'scene':
-                return 'arrow-right';
-            default:
-                return 'info-circle';
-        }
-    };
-
-    // Add a single hotspot
     const addHotspot = (hotspot) => {
         if (!viewerInstance.current) return;
 
@@ -38,25 +28,34 @@ const PreviewPane = ({
                 id: id || `hotspot-${Math.random().toString(36).substr(2, 9)}`,
                 pitch: parseFloat(pitch),
                 yaw: parseFloat(yaw),
-                type: "info",
-                cssClass: `hotspot-${type} ${activeHotspotId === id ? 'active-hotspot' : ''}`,
+                cssClass: 'custom-hotspot',
                 text: text,
                 createTooltipFunc: function (hotSpotDiv, args) {
+                    // Create container for hotspot
+                    const container = document.createElement('div');
+                    container.className = 'hotspot-container';
+
+                    // Create marker element
+                    const marker = document.createElement('div');
+                    marker.className = 'hotspot-marker';
+
+                    // Create tooltip element
                     const tooltip = document.createElement('div');
                     tooltip.className = 'hotspot-tooltip';
+                    tooltip.textContent = args.text;
 
-                    // Create icon element
-                    const icon = document.createElement('i');
-                    icon.className = `fa fa-${getHotspotIcon(type)}`;
-                    icon.style.marginRight = '5px';
+                    // Style the marker
+                    Object.assign(marker.style, {
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        backgroundColor: targetPanoramaId ? '#3b82f6' : '#f59e0b',
+                        border: '2px solid white',
+                        position: 'relative',
+                        cursor: 'pointer'
+                    });
 
-                    // Create text element
-                    const text = document.createElement('span');
-                    text.textContent = args.text;
-
-                    tooltip.appendChild(icon);
-                    tooltip.appendChild(text);
-
+                    // Style the tooltip
                     Object.assign(tooltip.style, {
                         position: 'absolute',
                         bottom: '100%',
@@ -70,12 +69,21 @@ const PreviewPane = ({
                         pointerEvents: 'none',
                         zIndex: '10',
                         fontSize: '14px',
-                        display: 'flex',
-                        alignItems: 'center'
+                        marginBottom: '5px',
+                        display: showHotspotLabels ? 'block' : 'none'
                     });
 
-                    hotSpotDiv.appendChild(tooltip);
-                    hotSpotDiv.style.pointerEvents = 'auto';
+                    // Add elements to container
+                    container.appendChild(tooltip);
+                    container.appendChild(marker);
+                    hotSpotDiv.appendChild(container);
+
+                    // Style the container
+                    Object.assign(hotSpotDiv.style, {
+                        width: '20px',
+                        height: '20px',
+                        pointerEvents: 'auto'
+                    });
                 },
                 clickHandlerFunc: editMode ? (event) => {
                     if (onAddHotspot) {
@@ -87,22 +95,21 @@ const PreviewPane = ({
                         });
                     }
                 } : (event, hotspot) => {
-                    // Toggle active hotspot
-                    if (activeHotspotId === hotspot.id) {
-                        setActiveHotspotId(null);
-                        // Load target panorama if this is a scene hotspot
-                        const targetPanorama = panoramas.find(p => p.id === targetPanoramaId);
+                    // Find the hotspot data
+                    const hotspotData = hotspots.find(h => h.id === hotspot.id);
+
+                    if (hotspotData?.targetPanoramaId) {
+                        const targetPanorama = panoramas.find(p => p.id === hotspotData.targetPanoramaId);
                         if (targetPanorama && onSelectPanorama) {
                             onSelectPanorama(targetPanorama);
                         }
-                    } else {
-                        setActiveHotspotId(hotspot.id);
                     }
                 }
             });
         } catch (error) {
             console.error('Error adding hotspot:', error);
         }
+
     };
 
     // Add all hotspots
@@ -128,44 +135,39 @@ const PreviewPane = ({
     useEffect(() => {
         if (!containerRef.current || !image) return;
 
-        // Destroy previous viewer if exists
-        if (viewerInstance.current) {
+        // Hancurkan viewer sebelumnya jika ada
+        if (pannellumRef.current) {
             try {
-                viewerInstance.current.destroy();
+                pannellumRef.current.destroy();
             } catch (e) {
                 console.error("Error destroying previous viewer:", e);
             }
         }
 
-        setIsViewerReady(false);
-
-        // Create new viewer
-        viewerInstance.current = window.pannellum.viewer(containerRef.current, {
+        // Inisialisasi viewer baru
+        const viewer = window.pannellum.viewer(containerRef.current, {
             type: "equirectangular",
             panorama: image,
             autoLoad: true,
-            showControls: false,
-            hotSpotDebug: editMode,
+            showControls: true,
+            hotSpotDebug: false,
             onLoad: () => {
+                console.log('Panorama loaded successfully');
                 setIsViewerReady(true);
+                addAllHotspots();
+            },
+            onError: (err) => {
+                console.error('Pannellum error:', err);
+                setIsViewerReady(false);
             }
         });
 
-        // Save reference to viewer
-        if (pannellumRef) {
-            pannellumRef.current = viewerInstance.current;
-        }
+        pannellumRef.current = viewer;
 
         return () => {
-            if (viewerInstance.current) {
-                try {
-                    viewerInstance.current.destroy();
-                } catch (e) {
-                    console.error("Error cleaning up viewer:", e);
-                }
-            }
+            if (viewer) viewer.destroy();
         };
-    }, [image, editMode, pannellumRef]);
+    }, [image]);
 
     useEffect(() => {
         if (isViewerReady) {

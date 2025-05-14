@@ -118,14 +118,24 @@ const VirtualTourService = {
 
     updateHotspot: async (panoramaId, hotspotId, hotspotData) => {
         try {
+            // Ensure pitch and yaw are numbers
+            const pitch = parseFloat(hotspotData.pitch);
+            const yaw = parseFloat(hotspotData.yaw);
+
+
             const response = await api.put(`/virtualtour/${panoramaId}/hotspots/${hotspotId}`, {
-                pitch: hotspotData.pitch,
-                yaw: hotspotData.yaw,
+                pitch: pitch,
+                yaw: yaw,
                 text: hotspotData.text,
-                description: hotspotData.description,
+                description: hotspotData.description || '',
                 targetPanoramaId: hotspotData.targetPanoramaId || null
             });
-            return response.data;
+
+            return {
+                ...response.data,
+                pitch: parseFloat(response.data.pitch),
+                yaw: parseFloat(response.data.yaw)
+            };
         } catch (error) {
             console.error('Error updating hotspot:', error);
             throw new Error(error.response?.data?.message || 'Failed to update hotspot');

@@ -17,10 +17,6 @@ const PreviewPane = ({
     const [isViewerReady, setIsViewerReady] = useState(false);
     const [currentView, setCurrentView] = useState({ pitch: 0, yaw: 0, hfov: 100 });
 
-
-
-
-
     // Tambahkan style untuk hotspot
     useEffect(() => {
         const styleId = 'pannellum-hotspot-styles';
@@ -233,53 +229,6 @@ const PreviewPane = ({
             console.error('Error updating hotspots:', e);
         }
     }, [hotspots, panoramas, onSelectPanorama, showHotspotLabels, activeHotspot]);
-
-    // Initialize and update viewer
-    // useEffect(() => {
-    //     if (!containerRef.current || !image) return;
-
-    //     const viewer = window.pannellum.viewer(containerRef.current, {
-    //         type: "equirectangular",
-    //         panorama: image,
-    //         autoLoad: true,
-    //         showControls: false,
-    //         hotSpotDebug: false,
-    //         hotSpots: hotspots.map(hotspot => ({
-    //             id: hotspot.id || `hotspot-${hotspot.pitch}-${hotspot.yaw}`,
-    //             pitch: parseFloat(hotspot.pitch) || 0,
-    //             yaw: parseFloat(hotspot.yaw) || 0,
-    //             cssClass: `custom-hotspot ${activeHotspot?.id === hotspot.id ? 'active' : ''}`,
-    //             createTooltipFunc: (hotSpotDiv) => {
-    //                 hotSpotDiv.innerHTML = '';
-    //                 const container = document.createElement('div');
-    //                 container.className = 'hotspot-container';
-    //                 const dot = document.createElement('div');
-    //                 dot.className = 'hotspot-dot';
-    //                 container.appendChild(dot);
-    //                 if (showHotspotLabels) {
-    //                     const label = document.createElement('div');
-    //                     label.className = 'hotspot-label';
-    //                     label.textContent = hotspot.text || 'Hotspot';
-    //                     container.appendChild(label);
-    //                 }
-    //                 hotSpotDiv.appendChild(container);
-    //             }
-    //         })),
-    //         onLoad: () => {
-    //             setIsViewerReady(true);
-    //             updateHotspotsInViewer();
-    //         },
-    //         onError: (error) => {
-    //             console.error('Viewer error:', error);
-    //         }
-    //     });
-
-    //     return () => {
-    //         if (viewerInstance.current) {
-    //             viewerInstance.current.destroy();
-    //         }
-    //     };
-    // }, [image, pannellumRef]);
 
     // Update hotspots when they change
     useEffect(() => {

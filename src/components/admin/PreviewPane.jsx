@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import 'pannellum/src/js/pannellum';
 
 const PreviewPane = ({
@@ -9,21 +9,19 @@ const PreviewPane = ({
     onAddHotspot,
     panoramas = [],
     onSelectPanorama,
-    showHotspotLabels = true
+    showHotspotLabels = true,
+    activeHotspot
 }) => {
     const containerRef = useRef(null);
     const viewerInstance = useRef(null);
     const [isViewerReady, setIsViewerReady] = useState(false);
     const [currentView, setCurrentView] = useState({ pitch: 0, yaw: 0, hfov: 100 });
-    const [localHotspots, setLocalHotspots] = useState(hotspots);
 
 
 
-    // Sync localHotspots with props
-    useEffect(() => {
-        setLocalHotspots(hotspots);
-    }, [hotspots]);
 
+
+    // Tambahkan style untuk hotspot
     useEffect(() => {
         const styleId = 'pannellum-hotspot-styles';
         if (document.getElementById(styleId)) return;
@@ -31,58 +29,58 @@ const PreviewPane = ({
         const style = document.createElement('style');
         style.id = styleId;
         style.textContent = `
-            .custom-hotspot {
-                width: 30px;
-                height: 30px;
-                pointer-events: auto;
-                transform: translate(-50%, -50%);
-            }
-            
-            .hotspot-container {
-                position: relative;
-                width: 100%;
-                height: 100%;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                pointer-events: none;
-            }
-            
-            .hotspot-dot {
-                width: 12px;
-                height: 12px;
-                background-color: green;
-                border-radius: 50%;
-                pointer-events: auto;
-            }
-            
-            .hotspot-label {
-                position: absolute;
-                top: 100%;
-                margin-top: 5px;
-                background-color: rgba(0, 0, 0, 0.7);
-                color: white;
-                padding: 2px 6px;
-                border-radius: 4px;
-                font-size: 12px;
-                white-space: nowrap;
-                opacity: 0;
-                transition: opacity 0.2s;
-                pointer-events: none;
-            }
-            
-            .hotspot-container:hover .hotspot-label {
-                opacity: 1;
-            }
-            
-            /* HIDE DEFAULT PANNELLUM CONTROLS */
-            .pnlm-controls-container {
-                display: none !important;
-            }
-            
+        .custom-hotspot {
+            width: 30px;
+            height: 30px;
+            pointer-events: auto;
+            transform: translate(-50%, -50%);
+        }
 
-        `;
+        .hotspot-dot {
+            width: 12px;
+            height: 12px;
+            background-color: green !important;
+            border-radius: 50%;
+            pointer-events: auto;
+            transition: all 0.2s ease;
+        }
+
+        .custom-hotspot.active .hotspot-dot {
+            background-color: #3182ce !important;
+            width: 16px;
+            height: 16px;
+        }
+        
+        .hotspot-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        
+        .hotspot-label {
+            position: absolute;
+            top: 100%;
+            margin-top: 5px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+        
+        .hotspot-container:hover .hotspot-label {
+            opacity: 1;
+        }
+    `;
         document.head.appendChild(style);
 
         return () => document.getElementById(styleId)?.remove();
@@ -106,60 +104,80 @@ const PreviewPane = ({
         }
     }, []);
 
+    // Di bagian handleAddHotspotButton
     const handleAddHotspotButton = () => {
-        if (!viewerInstance.current || !editMode) {
-            console.error("Viewer not ready or not in edit mode");
-            return;
-        }
+        if (!pannellumRef.current || !editMode || !onAddHotspot) return;
 
-        const pitch = parseFloat(viewerInstance.current.getPitch().toFixed(6));
-        const yaw = parseFloat(viewerInstance.current.getYaw().toFixed(6));
+        const pitch = parseFloat(pannellumRef.current.getPitch().toFixed(6));
+        const yaw = parseFloat(pannellumRef.current.getYaw().toFixed(6));
 
-        const newHotspot = {
-            id: `hotspot-${Date.now()}`,
-            pitch,
-            yaw,
-            text: `Hotspot ${localHotspots.length + 1}`,
-            targetPanoramaId: null
-        };
-
-        // Perbarui state
-        setLocalHotspots(prev => [...prev, newHotspot]);
-
-        // Langsung tambahkan ke viewer
-        viewerInstance.current.addHotSpot({
-            id: newHotspot.id,
-            pitch: newHotspot.pitch,
-            yaw: newHotspot.yaw,
-            cssClass: 'custom-hotspot',
-            createTooltipFunc: (hotSpotDiv) => {
-                hotSpotDiv.innerHTML = '';
-                const container = document.createElement('div');
-                container.className = 'hotspot-container';
-
-                const dot = document.createElement('div');
-                dot.className = 'hotspot-dot';
-
-                const label = document.createElement('div');
-                label.className = 'hotspot-label';
-                label.textContent = newHotspot.text;
-
-                container.appendChild(dot);
-                if (showHotspotLabels) {
-                    container.appendChild(label);
-                }
-                hotSpotDiv.appendChild(container);
-            }
-        });
-
-        if (onAddHotspot) onAddHotspot(newHotspot);
+        onAddHotspot({ pitch, yaw });
     };
 
-    // Function to update hotspots in the viewer
-    const updateHotspotsInViewer = () => {
-        if (!viewerInstance.current) return;
+    // Di useEffect inisialisasi viewer
+    useEffect(() => {
+        if (!containerRef.current || !image) return;
 
-        console.log("Updating hotspots in viewer:", hotspots); // Debugging log
+        const initViewer = () => {
+            if (viewerInstance.current) {
+                viewerInstance.current.destroy();
+            }
+
+            const viewer = window.pannellum.viewer(containerRef.current, {
+                type: "equirectangular",
+                panorama: image,
+                autoLoad: true,
+                showControls: false,
+                hotSpotDebug: false,
+
+                hotSpots: hotspots.map(hotspot => ({
+                    id: hotspot.id || `hotspot-${hotspot.pitch}-${hotspot.yaw}`,
+                    pitch: parseFloat(hotspot.pitch) || 0,
+                    yaw: parseFloat(hotspot.yaw) || 0,
+                    cssClass: `custom-hotspot ${activeHotspot?.id === hotspot.id ? 'active' : ''}`,
+                    createTooltipFunc: (hotSpotDiv) => {
+                        hotSpotDiv.innerHTML = '';
+                        const container = document.createElement('div');
+                        container.className = 'hotspot-container';
+                        const dot = document.createElement('div');
+                        dot.className = 'hotspot-dot';
+                        container.appendChild(dot);
+                        if (showHotspotLabels) {
+                            const label = document.createElement('div');
+                            label.className = 'hotspot-label';
+                            label.textContent = hotspot.text || 'Hotspot';
+                            container.appendChild(label);
+                        }
+                        hotSpotDiv.appendChild(container);
+                    }
+                })),
+                onLoad: () => {
+                    setIsViewerReady(true);
+                    updateHotspotsInViewer();
+                },
+                onError: (error) => {
+                    console.error('Viewer error:', error);
+                }
+            });
+
+            viewerInstance.current = viewer;
+            if (pannellumRef) {
+                pannellumRef.current = viewer;
+            }
+        };
+
+        const timer = setTimeout(initViewer, 100);
+        return () => {
+            clearTimeout(timer);
+            if (viewerInstance.current) {
+                viewerInstance.current.destroy();
+            }
+        };
+    }, [image, pannellumRef]);
+
+    // Di dalam updateHotspotsInViewer
+    const updateHotspotsInViewer = useCallback(() => {
+        if (!viewerInstance.current) return;
 
         try {
             // Hapus semua hotspot yang ada
@@ -170,30 +188,35 @@ const PreviewPane = ({
 
             // Tambahkan hotspot baru
             hotspots.forEach(hotspot => {
+                const pitch = parseFloat(hotspot.pitch) || 0;
+                const yaw = parseFloat(hotspot.yaw) || 0;
+                const hotspotId = hotspot.id || `hotspot-${pitch}-${yaw}-${Date.now()}`;
+
                 viewerInstance.current.addHotSpot({
-                    id: hotspot.id,
-                    pitch: parseFloat(hotspot.pitch),
-                    yaw: parseFloat(hotspot.yaw),
-                    cssClass: 'custom-hotspot',
+                    id: hotspotId,
+                    pitch: pitch,
+                    yaw: yaw,
+                    cssClass: `custom-hotspot ${activeHotspot?.id === hotspot.id ? 'active' : ''}`,
                     createTooltipFunc: (hotSpotDiv) => {
+                        // Bersihkan isi
                         hotSpotDiv.innerHTML = '';
+                        // Container
                         const container = document.createElement('div');
                         container.className = 'hotspot-container';
-
+                        // Dot
                         const dot = document.createElement('div');
                         dot.className = 'hotspot-dot';
-
-                        const label = document.createElement('div');
-                        label.className = 'hotspot-label';
-                        label.textContent = hotspot.text || 'Hotspot';
-
                         container.appendChild(dot);
+                        // Label
                         if (showHotspotLabels) {
+                            const label = document.createElement('div');
+                            label.className = 'hotspot-label';
+                            label.textContent = hotspot.text || 'Hotspot';
                             container.appendChild(label);
                         }
                         hotSpotDiv.appendChild(container);
 
-                        // Navigasi ke panorama tujuan jika targetPanoramaId ada
+                        // Event click jika ada targetPanoramaId
                         if (hotspot.targetPanoramaId) {
                             hotSpotDiv.addEventListener('click', (e) => {
                                 e.stopPropagation();
@@ -209,71 +232,61 @@ const PreviewPane = ({
         } catch (e) {
             console.error('Error updating hotspots:', e);
         }
-
-
-
-
-        if (editMode && viewerInstance.current) {
-            try {
-                viewerInstance.current.addHotSpot({
-                    id: 'center-pointer',
-                    pitch: currentView.pitch,
-                    yaw: currentView.yaw,
-                    cssClass: 'center-pointer',
-
-                });
-            } catch (e) {
-                console.error("Error adding center pointer hotspot:", e);
-            }
-        }
-    };
+    }, [hotspots, panoramas, onSelectPanorama, showHotspotLabels, activeHotspot]);
 
     // Initialize and update viewer
-    useEffect(() => {
-        if (!containerRef.current || !image) return;
+    // useEffect(() => {
+    //     if (!containerRef.current || !image) return;
 
-        const initViewer = () => {
-            if (viewerInstance.current) {
-                viewerInstance.current.destroy();
-            }
+    //     const viewer = window.pannellum.viewer(containerRef.current, {
+    //         type: "equirectangular",
+    //         panorama: image,
+    //         autoLoad: true,
+    //         showControls: false,
+    //         hotSpotDebug: false,
+    //         hotSpots: hotspots.map(hotspot => ({
+    //             id: hotspot.id || `hotspot-${hotspot.pitch}-${hotspot.yaw}`,
+    //             pitch: parseFloat(hotspot.pitch) || 0,
+    //             yaw: parseFloat(hotspot.yaw) || 0,
+    //             cssClass: `custom-hotspot ${activeHotspot?.id === hotspot.id ? 'active' : ''}`,
+    //             createTooltipFunc: (hotSpotDiv) => {
+    //                 hotSpotDiv.innerHTML = '';
+    //                 const container = document.createElement('div');
+    //                 container.className = 'hotspot-container';
+    //                 const dot = document.createElement('div');
+    //                 dot.className = 'hotspot-dot';
+    //                 container.appendChild(dot);
+    //                 if (showHotspotLabels) {
+    //                     const label = document.createElement('div');
+    //                     label.className = 'hotspot-label';
+    //                     label.textContent = hotspot.text || 'Hotspot';
+    //                     container.appendChild(label);
+    //                 }
+    //                 hotSpotDiv.appendChild(container);
+    //             }
+    //         })),
+    //         onLoad: () => {
+    //             setIsViewerReady(true);
+    //             updateHotspotsInViewer();
+    //         },
+    //         onError: (error) => {
+    //             console.error('Viewer error:', error);
+    //         }
+    //     });
 
-            const viewer = window.pannellum.viewer(containerRef.current, {
-                type: "equirectangular",
-                panorama: image,
-                autoLoad: true,
-                showControls: false, // Matikan controls bawaan
-                hotSpotDebug: false,
-                mouseZoom: true,
-                passive: true,
-                onLoad: () => {
-                    setIsViewerReady(true);
-                    updateCurrentView();
-                    updateHotspotsInViewer(hotspots);
-                },
-                onError: (error) => {
-                    console.error('Viewer error:', error);
-                }
-            });
-
-            viewerInstance.current = viewer;
-            pannellumRef.current = viewer;
-        };
-
-        initViewer();
-
-        return () => {
-            if (viewerInstance.current) {
-                viewerInstance.current.destroy();
-            }
-        };
-    }, [image]);
+    //     return () => {
+    //         if (viewerInstance.current) {
+    //             viewerInstance.current.destroy();
+    //         }
+    //     };
+    // }, [image, pannellumRef]);
 
     // Update hotspots when they change
     useEffect(() => {
         if (isViewerReady) {
             updateHotspotsInViewer();
         }
-    }, [isViewerReady, localHotspots, editMode, currentView, hotspots]);
+    }, [isViewerReady, hotspots]);
 
     return (
         <div style={{ position: "relative", width: "100%", height: "100%" }}>

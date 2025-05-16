@@ -1,31 +1,31 @@
 import api from '../utils/api';
 
 const VirtualTourService = {
+    // Pastikan transformasi data hotspot benar
     getPanoramas: async (search = '') => {
         try {
-            const response = await api.get('/virtualtour', {
-                params: { search }
-            });
+            const response = await api.get('/virtualtour', { params: { search } });
 
-            // Transform data with proper image URLs
+            // Pastikan response.data.data adalah array
+            if (!Array.isArray(response.data.data)) {
+                throw new Error('Invalid data format from server');
+            }
+
             const transformedData = response.data.data.map(panorama => ({
                 ...panorama,
                 gambar_panorama: panorama.gambar_panorama,
                 hotspots: panorama.hotspots.map(hotspot => ({
                     id: hotspot.id,
-                    pitch: hotspot.pitch,
-                    yaw: hotspot.yaw,
-                    text: hotspot.name_deskripsi,
-                    description: hotspot.deskripsi,
-                    targetPanoramaId: hotspot.targetpanoramald,
-                    iconUrl: hotspot.iconUrl
+                    pitch: parseFloat(hotspot.pitch) || 0,
+                    yaw: parseFloat(hotspot.yaw) || 0,
+                    text: hotspot.text || hotspot.name_deskripsi || 'Hotspot',
+                    description: hotspot.description || hotspot.deskripsi || '',
+                    targetPanoramaId: hotspot.targetPanoramaId || hotspot.targetpanoramald || null,
+                    id_panorama_asal: hotspot.id_panorama_asal || panorama.id
                 }))
             }));
 
-            return {
-                success: true,
-                data: transformedData
-            };
+            return { success: true, data: transformedData };
         } catch (error) {
             console.error('Error fetching panoramas:', error);
             return {
@@ -100,13 +100,14 @@ const VirtualTourService = {
         }
     },
 
+    // virtualtourService.js - Perbaikan fungsi createHotspot
     createHotspot: async (panoramaId, hotspotData) => {
         try {
             const response = await api.post(`/virtualtour/${panoramaId}/hotspots`, {
                 pitch: hotspotData.pitch,
                 yaw: hotspotData.yaw,
                 text: hotspotData.text,
-                description: hotspotData.description,
+                description: hotspotData.description || '',
                 targetPanoramaId: hotspotData.targetPanoramaId || null
             });
             return response.data;

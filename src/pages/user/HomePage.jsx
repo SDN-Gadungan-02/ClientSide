@@ -172,8 +172,9 @@ export default function HomePage() {
                         <Chip
                             value={post.category}
                             color={
-                                post.category === "Prestasi Akademik" ? "green" :
-                                    post.category === "Prestasi Non-Akademik" ? "blue" : "amber"
+                                post.category === "Prestasi" ? "green" :
+                                    post.category === "Pengumuman" ? "blue" :
+                                        post.category === "Kegiatan" ? "amber" : "gray"
                             }
                             className="rounded-full text-xs"
                         />

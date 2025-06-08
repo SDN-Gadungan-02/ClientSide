@@ -305,8 +305,9 @@ const ManagePostPage = () => {
                                     <Chip
                                         value={post.kategori}
                                         color={
-                                            post.kategori === "Pengumuman" ? "blue" :
-                                                post.kategori === "Prestasi" ? "green" : "amber"
+                                            post.kategori === "Prestasi" ? "green" :
+                                                post.kategori === "Pengumuman" ? "blue" :
+                                                    post.kategori === "Kegiatan" ? "amber" : "gray"
                                         }
                                     />
                                 </div>

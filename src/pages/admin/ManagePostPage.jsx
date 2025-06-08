@@ -400,26 +400,41 @@ const ManagePostPage = () => {
                 Kelola Postingan
             </Typography>
 
-            {/* Search and Add Button */}
-            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                <div className="w-full md:w-1/2">
-                    <Input
-                        label="Cari Postingan..."
-                        icon={<MagnifyingGlassIcon className="h-5 w-5" />}
-                        value={searchTerm}
-                        onChange={(e) => setStateValue("searchTerm", e.target.value)}
-                        placeholder="Cari berdasarkan judul, deskripsi, atau kategori..."
-                        className="w-full md:w-1/2"
-                    />
-                </div>
-                <Button className="flex items-center gap-2" onClick={handleOpen}>
-                    <PlusIcon className="h-5 w-5" /> Tambah Postingan
-                </Button>
-            </div>
-
             {/* Posts Table */}
             <Card>
                 <CardBody>
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div className="w-full">
+                            <div className="flex flex-col md:flex-row gap-4 w-full">
+                                <div className="relative flex-1">
+                                    <Input
+                                        label="Cari Postingan..."
+                                        icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+                                        value={searchTerm}
+                                        onChange={(e) => setStateValue("searchTerm", e.target.value)}
+                                        placeholder="Judul, deskripsi, atau kategori..."
+                                    />
+                                    {searchTerm && (
+                                        <IconButton
+                                            variant="text"
+                                            size="sm"
+                                            className="!absolute right-1 top-1/2 transform -translate-y-1/2"
+                                            onClick={() => setStateValue("searchTerm", "")}
+                                        >
+                                            <XMarkIcon className="h-4 w-4" />
+                                        </IconButton>
+                                    )}
+                                </div>
+
+                                <Button
+                                    className="md:w-auto flex items-center gap-2"
+                                    onClick={handleOpen}
+                                >
+                                    <PlusIcon className="h-5 w-5" /> Tambah Postingan
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
                     {posts.length === 0 ? renderEmptyState() : renderTable()}
                 </CardBody>
             </Card>

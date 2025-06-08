@@ -297,38 +297,38 @@ const ManageUserPage = () => {
 
             <Card className="mb-6">
                 <CardBody>
-                    <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                        <Typography variant="h5" className="font-bold">
-                            Daftar Pengguna
-                        </Typography>
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div className="w-full">
 
-                        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-                            <Input
-                                label="Cari Pengguna..."
-                                icon={<MagnifyingGlassIcon className="h-5 w-5" />}
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Cari berdasarkan nama, email, atau role..."
-                                className="w-full md:w-64"
-                            />
-                            <Button
-                                className="flex items-center gap-2 whitespace-nowrap"
-                                onClick={() => handleOpenModal()}
-                            >
-                                <PlusIcon className="h-5 w-5" /> Tambah Pengguna
-                            </Button>
+                            <div className="flex flex-col md:flex-row gap-4 w-full">
+                                <div className="relative flex-1">
+                                    <Input
+                                        label="Cari Pengguna..."
+                                        icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        placeholder="Nama, email, atau role..."
+                                    />
+                                    {searchTerm && (
+                                        <IconButton
+                                            variant="text"
+                                            size="sm"
+                                            className="!absolute right-1 top-1/2 transform -translate-y-1/2"
+                                            onClick={() => setSearchTerm("")}
+                                        >
+                                            <XMarkIcon className="h-4 w-4" />
+                                        </IconButton>
+                                    )}
+                                </div>
+
+                                <Button
+                                    className="md:w-auto flex items-center gap-2"
+                                    onClick={() => handleOpenModal()}
+                                >
+                                    <PlusIcon className="h-5 w-5" /> Tambah Pengguna
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                    <div className="flex justify-between items-center mb-6">
-                        <Typography variant="h5" className="font-bold">
-                            Daftar Pengguna
-                        </Typography>
-                        <Button
-                            className="flex items-center gap-2"
-                            onClick={() => handleOpenModal()}
-                        >
-                            <PlusIcon className="h-5 w-5" /> Tambah Pengguna
-                        </Button>
                     </div>
 
                     {loading ? (
@@ -340,29 +340,30 @@ const ManageUserPage = () => {
                             <table className="w-full min-w-max">
                                 <thead>
                                     <tr>
-                                        <th className="p-4 text-left bg-blue-gray-50">Username</th>
-                                        <th className="p-4 text-left bg-blue-gray-50">Email</th>
-                                        <th className="p-4 text-left bg-blue-gray-50">Role</th>
+                                        <th className="p-4 text-center bg-blue-gray-50">Username</th>
+                                        <th className="p-4 text-center bg-blue-gray-50">Email</th>
+                                        <th className="p-4 text-center bg-blue-gray-50">Role</th>
 
-                                        <th className="p-4 text-left bg-blue-gray-50">Aksi</th>
+                                        <th className="p-4 text-center bg-blue-gray-50">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {users.length > 0 ? (
                                         users.map((user) => (
                                             <tr key={user.id} className="border-b border-blue-gray-100">
-                                                <td className="p-4">{user.username}</td>
-                                                <td className="p-4">{user.email}</td>
-                                                <td className="p-4">
+                                                <td className="p-4 text-center">{user.username}</td>
+                                                <td className="p-4 text-center">{user.email}</td>
+                                                <td className="p-4 text-center">
                                                     <Chip
                                                         value={user.role}
                                                         color={
                                                             user.role === "superadmin" ? "amber" :
                                                                 user.role === "admin" ? "blue" : "green"
                                                         }
+                                                        className="text-center"
                                                     />
                                                 </td>
-                                                <td className="p-4">
+                                                <td className="p-4 justify-center flex gap-2">
                                                     <div className="flex gap-2">
                                                         <Tooltip content="Edit">
                                                             <IconButton

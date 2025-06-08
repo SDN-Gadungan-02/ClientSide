@@ -218,24 +218,42 @@ const ManageTeacherPage = () => {
                 Manajemen Guru
             </Typography>
 
-            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                <div className="w-full md:w-1/2">
-                    <Input
-                        label="Cari Guru..."
-                        icon={<MagnifyingGlassIcon className="h-5 w-5" />}
-                        value={searchTerm}
-                        onChange={(e) => setStateValue("searchTerm", e.target.value)}
-                        placeholder="Cari berdasarkan nama, NIP, atau keterangan..."
-                        className="w-full md:w-1/2"
-                    />
-                </div>
-                <Button className="flex items-center gap-2" onClick={() => handleOpenModal()}>
-                    <PlusIcon className="h-5 w-5" /> Tambah Guru
-                </Button>
-            </div>
+
 
             <Card>
                 <CardBody>
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div className="w-full">
+                            <div className="flex flex-col md:flex-row gap-4 w-full">
+                                <div className="relative flex-1">
+                                    <Input
+                                        label="Cari Guru..."
+                                        icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+                                        value={searchTerm}
+                                        onChange={(e) => setStateValue("searchTerm", e.target.value)}
+                                        placeholder="Nama, NIP, atau keterangan..."
+                                    />
+                                    {searchTerm && (
+                                        <IconButton
+                                            variant="text"
+                                            size="sm"
+                                            className="!absolute right-1 top-1/2 transform -translate-y-1/2"
+                                            onClick={() => setStateValue("searchTerm", "")}
+                                        >
+                                            <XMarkIcon className="h-4 w-4" />
+                                        </IconButton>
+                                    )}
+                                </div>
+
+                                <Button
+                                    className="md:w-auto flex items-center gap-2"
+                                    onClick={() => handleOpenModal()}
+                                >
+                                    <PlusIcon className="h-5 w-5" /> Tambah Guru
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
                     {teachers.length === 0 ? (
                         <Typography className="text-center py-8">
                             Tidak ada data guru ditemukan

@@ -117,13 +117,13 @@ const HeadSpeechPage = () => {
             <div className="max-w-7xl mx-auto">
                 {/* Header Section */}
                 <div className="text-center mb-16">
-                    <div className="inline-flex items-center justify-center p-3 rounded-full bg-blue-100 mb-4">
-                        <AcademicCapIcon className="h-8 w-8 text-blue-600" />
+                    <div className="inline-flex items-center justify-center p-3 rounded-full bg-normalGreenColor mb-4">
+                        <AcademicCapIcon className="h-8 w-8 text-darkGreenColor" />
                     </div>
                     <Typography variant="h1" className="text-4xl font-bold text-gray-900 mb-2">
                         Sambutan Kepala Sekolah
                     </Typography>
-                    <Typography variant="lead" className="text-blue-600">
+                    <Typography variant="lead" className="text-darkGreenColor">
                         SD Negeri Gadungan 02
                     </Typography>
                 </div>
@@ -157,7 +157,7 @@ const HeadSpeechPage = () => {
                                                     size="xxl"
                                                     className="border-4 border-white shadow-lg"
                                                 />
-                                                <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-1 rounded-full shadow-sm">
+                                                <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-darkGreenColor text-white px-4 py-1 rounded-full shadow-sm">
                                                     <Typography variant="small" className="font-bold flex items-center gap-1">
                                                         <BuildingOfficeIcon className="h-10 w-10" />
                                                         Kepala Sekolah
@@ -188,13 +188,13 @@ const HeadSpeechPage = () => {
                                                     </Typography>
 
                                                     {/* Improved Tujuan Section */}
-                                                    <div className="my-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+                                                    <div className="my-8 p-6 bg-whiteColor rounded-xl border border-normalGreenColor shadow-sm hover:shadow-md transition-shadow duration-300">
                                                         <div className="flex items-start gap-4">
-                                                            <div className="bg-blue-100 p-3 rounded-full">
-                                                                <AcademicCapIcon className="h-6 w-6 text-blue-600" />
+                                                            <div className="bg-normalGreenColor p-3 rounded-full">
+                                                                <AcademicCapIcon className="h-6 w-6 text-darkGreenColor" />
                                                             </div>
                                                             <div className="flex-1">
-                                                                <Typography variant="h5" className="text-blue-800 font-bold mb-3 flex items-center gap-2">
+                                                                <Typography variant="h5" className="text-mediumGreenColor font-bold mb-3 flex items-center gap-2">
                                                                     Tujuan Pendidikan Kami
                                                                 </Typography>
                                                                 <ul className="space-y-3">
@@ -204,7 +204,7 @@ const HeadSpeechPage = () => {
                                                                                 key={index}
                                                                                 className="flex items-start gap-3 group"
                                                                             >
-                                                                                <span className="mt-1.5 w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 group-hover:bg-blue-800 transition-colors"></span>
+                                                                                <span className="mt-1.5 w-2 h-2 bg-darkGreenColor rounded-full flex-shrink-0 group-hover:bg-mediumGreenColor transition-colors"></span>
                                                                                 <Typography variant="paragraph" className="text-gray-700 group-hover:text-gray-900 transition-colors">
                                                                                     {item}
                                                                                 </Typography>
@@ -249,8 +249,8 @@ const HeadSpeechPage = () => {
                         <Card className="shadow-lg">
                             <CardBody className="p-6">
                                 <div className="flex items-center gap-3 mb-6">
-                                    <div className="p-2 bg-blue-100 rounded-lg">
-                                        <UserGroupIcon className="h-6 w-6 text-blue-600" />
+                                    <div className="p-2 bg-normalGreenColor rounded-lg">
+                                        <UserGroupIcon className="h-6 w-6 text-darkGreenColor" />
                                     </div>
                                     <Typography variant="h3" className="text-xl font-bold text-gray-900">
                                         Staf Pengajar
@@ -288,7 +288,7 @@ const HeadSpeechPage = () => {
                         </Card>
 
                         {/* Visi Misi */}
-                        <Card className="shadow-lg bg-blue-600 text-white">
+                        <Card className="shadow-lg bg-darkGreenColor text-white">
                             <CardBody className="p-6">
                                 <div className="flex items-center gap-3 mb-6">
                                     <div className="p-2 bg-white/20 rounded-lg">

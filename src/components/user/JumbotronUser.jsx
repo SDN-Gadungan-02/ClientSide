@@ -68,10 +68,10 @@ const JumbotronUser = () => {
                                 {slide.subtitle}
                             </Typography>
                             <div className="flex gap-4 justify-center">
-                                <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded">
+                                <button className="bg-mediumGreenColor  text-white font-bold py-2 px-6 rounded">
                                     Profil Sekolah
                                 </button>
-                                <button className="bg-transparent hover:bg-white text-white hover:text-blue-800 font-bold py-2 px-6 border border-white rounded">
+                                <button className="bg-transparent hover:bg-white text-darkGreenColor hover:text-darkGreenColor font-bold py-2 px-6 border border-darkGreenColor rounded">
                                     Kontak Kami
                                 </button>
                             </div>

@@ -124,29 +124,38 @@ export default function HomePage() {
 
     const renderVisiMisiCard = (title, content) => {
         return (
-            <div className="relative group flex flex-col items-center h-full">
-                <div className="absolute -top-3 w-1/2 z-10 px-2">
-                    <div className="bg-white text-blackColor text-base font-semibold px-4 py-2 rounded-tr-lg rounded-tl-lg border-gray-200 text-center mx-auto max-w-[90%]">
-                        {title}
-                    </div>
-                </div>
-                <Card className="hover:shadow-md transition-all duration-300 w-full h-full pt-6">
-                    <CardBody className="h-full flex flex-col p-4">
+            <div className="relative group h-full">
+                <Card className="hover:shadow-lg transition-all duration-300 w-full h-full border-t-4 border-mediumGreenColor overflow-hidden">
+                    <CardBody className="h-full flex flex-col p-6">
+                        <Typography variant="h5" className="text-darkGreenColor font-bold mb-4 flex items-center">
+                            <div className="w-3 h-3 bg-darkGreenColor rounded-full mr-3"></div>
+                            {title}
+                        </Typography>
+
                         {Array.isArray(content) ? (
-                            <ul className="space-y-2">
+                            <ul className="space-y-3 pl-2">
                                 {content.map((item, index) => (
-                                    <li key={index} className="flex items-start">
-                                        <span className="mr-2">•</span>
-                                        <Typography variant="medium" className="whitespace-pre-line">
+                                    <li
+                                        key={index}
+                                        className="flex items-start hover:bg-blue-50/50 transition-colors p-2 rounded-lg -ml-2"
+                                    >
+                                        <div className="flex-shrink-0 mt-1.5 mr-3">
+                                            <svg className="w-3 h-3 text-darkGreenColor" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
+                                            </svg>
+                                        </div>
+                                        <Typography variant="paragraph" className="text-gray-700">
                                             {item}
                                         </Typography>
                                     </li>
                                 ))}
                             </ul>
                         ) : (
-                            <Typography variant="medium" className="text-center whitespace-pre-line">
-                                {content}
-                            </Typography>
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                                <Typography variant="lead" className="text-gray-600">
+                                    {content}
+                                </Typography>
+                            </div>
                         )}
                     </CardBody>
                 </Card>

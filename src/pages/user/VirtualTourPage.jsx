@@ -84,6 +84,14 @@ const VirtualTourPage = () => {
 
     return (
         <div className="min-h-[calc(100vh-200px)] py-8 px-4 bg-gray-50">
+            <div className="text-center mb-12">
+                <Typography variant="h1" className="text-3xl font-bold text-gray-900 mb-2">
+                    Virtual Tour SDN Gadungan 02
+                </Typography>
+                <Typography variant="lead" className="text-gray-600">
+                    Informasi tentang denah VR 360 SDN Gadungan 02
+                </Typography>
+            </div>
             <div className="container mx-auto px-4 py-6">
                 {/* Panorama Viewer */}
                 <div className="mb-6">
@@ -134,7 +142,7 @@ const VirtualTourPage = () => {
                         <Card
                             key={panorama.id}
                             className={`cursor-pointer transition-all ${currentScene === index
-                                ? 'ring-2 ring-blue-500 scale-105'
+                                ? 'ring-2 ring-normalGreenColor '
                                 : 'hover:shadow-md'
                                 }`}
                             onClick={() => handleThumbnailClick(index)}
@@ -175,7 +183,7 @@ const VirtualTourPage = () => {
                                             onClick={() => handleHotspotClick(hotspot)}
                                         >
                                             <Typography variant="h6" className="flex items-center gap-2">
-                                                <span className="w-3 h-3 rounded-full bg-blue-500"></span>
+                                                <span className="w-3 h-3 rounded-full bg-darkGreenColor"></span>
                                                 {hotspot.text}
                                             </Typography>
                                             {hotspot.description && (
@@ -184,7 +192,7 @@ const VirtualTourPage = () => {
                                                 </Typography>
                                             )}
                                             {hotspot.targetPanoramaId && (
-                                                <Typography variant="small" className="text-blue-500 mt-1">
+                                                <Typography variant="small" className="text-darkGreenColor mt-1">
                                                     Click to navigate
                                                 </Typography>
                                             )}

@@ -15,12 +15,10 @@ export default {
       colors: {
         whiteColor: '#ffffff',
         blackColor: '#000000',
-        lightGreenColor: '#b5ea8c',
-        lightGreenColor2: '#94bf73',
-        mediumGreenColor1: '#739559',
-        mediumGreenColor2: '#526a40',
-        darkGreenColor: '#314026',
-        darkGreenColor2: '#11150d',
+        lightGreenColor: '#ECFAE5',
+        normalGreenColor: '#DDF6D2',
+        mediumGreenColor: '#CAE8BD',
+        darkGreenColor: '#B0DB9C',
       },
       backgroundImage: {
         'logo': "url('./src/assets/react.svg')",

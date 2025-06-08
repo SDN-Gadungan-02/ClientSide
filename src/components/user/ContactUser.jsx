@@ -28,7 +28,7 @@ export default function ContactUser() {
             <div className="container mx-auto px-4 relative z-10">
                 <Card className="max-w-4xl mx-auto bg-white/90 backdrop-blur-md rounded-xl shadow-xl overflow-hidden">
                     {/* Header */}
-                    <CardHeader floated={false} shadow={false} className="text-center p-6 bg-mediumGreenColor1">
+                    <CardHeader floated={false} shadow={false} className="text-center p-6 bg-mediumGreenColor">
                         <Typography variant="h3" className="text-white">
                             Hubungi Kami
                         </Typography>
@@ -40,7 +40,7 @@ export default function ContactUser() {
                             <div className="bg-blue-gray-50/50 rounded-lg p-4 min-w-[250px] flex-2">
                                 <div className="flex items-center">
                                     <div className="bg-green-100 p-2 rounded-full mr-4">
-                                        <MapPinIcon className="h-5 w-5 text-darkGreenColor1" />
+                                        <MapPinIcon className="h-5 w-5 text-darkGreenColor" />
                                     </div>
                                     <div>
                                         <Typography color="gray" className="font-normal">
@@ -53,7 +53,7 @@ export default function ContactUser() {
                             <div className="bg-blue-gray-50/50 rounded-lg p-4 min-w-[150px] flex-2">
                                 <div className="flex items-center">
                                     <div className="bg-green-100 p-2 rounded-full mr-4">
-                                        <PhoneIcon className="h-5 w-5 text-darkGreenColor1" />
+                                        <PhoneIcon className="h-5 w-5 text-darkGreenColor" />
                                     </div>
                                     <div>
                                         <Typography color="gray" className="font-normal">
@@ -66,7 +66,7 @@ export default function ContactUser() {
                             <div className="bg-blue-gray-50/50 rounded-lg p-4 min-w-[250px] flex-2">
                                 <div className="flex items-center">
                                     <div className="bg-green-100 p-2 rounded-full mr-4">
-                                        <EnvelopeIcon className="h-5 w-5 text-darkGreenColor1" />
+                                        <EnvelopeIcon className="h-5 w-5 text-darkGreenColor" />
                                     </div>
                                     <div>
                                         <Typography color="gray" className="font-normal">

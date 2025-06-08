@@ -7,10 +7,9 @@ export default function FooterUser() {
         {
             title: "Tautan Cepat",
             links: [
-                { name: "Beranda", href: "/" },
-                { name: "Profil Sekolah", href: "/profil" },
-                { name: "Visi & Misi", href: "/visi-misi" },
-                { name: "Berita Terkini", href: "/berita" },
+                { name: "Sejarah Sekolah", href: "sejarah-sekolah" },
+                { name: "Visi Misi", href: "visi-misi" },
+                { name: "Sambutan Kepala Sekolah", href: "sambutan-kepala-sekolah" },
             ],
         },
     ];
@@ -27,7 +26,7 @@ export default function FooterUser() {
                         <Typography variant="h5" className="mb-4">
                             <span className="block text-white">SDN GADUNGAN 2</span>
                         </Typography>
-                        <Typography className="text-gray-300">
+                        <Typography className="text-white">
                             Sekolah Unggul Berbasis Teknologi Informasi dan Karakter Bangsa
                         </Typography>
                     </div>
@@ -43,7 +42,7 @@ export default function FooterUser() {
                                     <li key={linkIndex}>
                                         <a
                                             href={link.href}
-                                            className="text-gray-300 hover:text-white transition-colors"
+                                            className="text-white hover:text-white transition-colors"
                                         >
                                             {link.name}
                                         </a>
@@ -61,27 +60,27 @@ export default function FooterUser() {
                         <ul className="space-y-3">
                             <li className="flex items-start">
                                 <MapPinIcon className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-300">
+                                <span className="text-white">
                                     Jl. Veteran No. 45, Kebumen 54312
                                 </span>
                             </li>
                             <li className="flex items-center">
                                 <PhoneIcon className="h-5 w-5 mr-2" />
-                                <span className="text-gray-300">(0287) 381407</span>
+                                <span className="text-white">(0287) 381407</span>
                             </li>
                             <li className="flex items-center">
                                 <EnvelopeIcon className="h-5 w-5 mr-2" />
-                                <span className="text-gray-300">sdngadungan02@gmail.com</span>
+                                <span className="text-white">sdngadungan02@gmail.com</span>
                             </li>
                             <li className="flex items-center">
                                 <ClockIcon className="h-5 w-5 mr-2" />
-                                <span className="text-gray-300">Senin-Jumat: 07.00-15.00</span>
+                                <span className="text-white">Senin-Jumat: 07.00-15.00</span>
                             </li>
                         </ul>
                     </div>
                 </div>
 
-                <div className="border-t border-lightGreenColor mt-8 pt-6 text-center text-whiteColor">
+                <div className="border-t border-nColor mt-8 pt-6 text-center text-whiteColor">
                     <Typography variant="small">
                         © {new Date().getFullYear()} SDN GADUNGAN 2. All rights reserved.
                     </Typography>

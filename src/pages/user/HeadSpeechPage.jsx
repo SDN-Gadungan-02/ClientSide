@@ -1,15 +1,116 @@
-import React from "react";
-import { Typography, Card, CardBody, Avatar, Button } from "@material-tailwind/react";
-import { AcademicCapIcon, UserGroupIcon, TrophyIcon, BookOpenIcon } from "@heroicons/react/24/solid";
+import React, { useState, useEffect } from "react";
+import { Typography, Card, CardBody, Avatar, Button, Spinner } from "@material-tailwind/react";
+import { AcademicCapIcon, UserGroupIcon, TrophyIcon, BookOpenIcon, BuildingOfficeIcon } from "@heroicons/react/24/solid";
+import TeacherService from "../../services/teacherService";
+import HeadSpeechService from "../../services/headspeechService";
+import VisiMisiService from "../../services/visiMisiService";
+import PostService from "../../services/postService";
+import { toast } from "react-toastify";
+import back from "../../assets/jumbo2.jpg";
 
 const HeadSpeechPage = () => {
-    // Data guru contoh
-    const teachers = [
-        { name: "Dr. Siti Aminah, M.Pd", nik: "196512341982032001", position: "Kepala Sekolah", photo: "/teachers/principal.jpg" },
-        { name: "Budi Santoso, S.Pd", nik: "197803121995021002", position: "Wakil Kepala Sekolah", photo: "/teachers/vice-principal.jpg" },
-        { name: "Dewi Lestari, S.Pd", nik: "198204152000122003", position: "Guru Kelas 1", photo: "/teachers/teacher1.jpg" },
-        { name: "Rudi Hermawan, S.Pd", nik: "198511102005011004", position: "Guru Kelas 2", photo: "/teachers/teacher2.jpg" },
-    ];
+    const [teachersData, setTeachersData] = useState([]);
+    const [speech, setSpeech] = useState("");
+    const [visiMisi, setVisiMisi] = useState({ visi: "", misi: [], tujuan: [] });
+    const [prestasiPosts, setPrestasiPosts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    const fetchHeadSpeech = async () => {
+        try {
+            const response = await HeadSpeechService.getHeadSpeech();
+            setSpeech(response.data.text_speech || "");
+
+            console.log('Head speech fetched:', response.data);
+        } catch (error) {
+            console.error("Error fetching head speech:", error);
+            toast.error("Gagal memuat sambutan kepala sekolah");
+        }
+    };
+
+    const fetchTeachers = async () => {
+        try {
+            const response = await TeacherService.getTeachers();
+            console.log('Full API response:', response);
+
+            // Handle the API response structure
+            const teachersArray = response.success ? response.data : [];
+            setTeachersData(Array.isArray(teachersArray) ? teachersArray : []);
+
+            console.log('Processed teachers data:', teachersArray);
+
+
+        } catch (err) {
+            console.error('Error fetching teachers:', err);
+            setError('Gagal memuat data guru');
+            toast.error('Gagal memuat data guru');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchVisiMisi = async () => {
+        try {
+            const response = await VisiMisiService.getVisiMisi();
+            setVisiMisi(response.data);
+            console.log('Visi Misi fetched:', response.data);
+        } catch (error) {
+            console.error("Error fetching visi misi:", error);
+        }
+    };
+
+    const fetchPrestasiPosts = async () => {
+        try {
+            const response = await PostService.getPosts();
+            // Filter hanya postingan dengan kategori "Prestasi" dan urutkan dari yang terbaru
+            const filteredPosts = response.data
+                .filter(post => post.kategori_postingan === "Prestasi")
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                .slice(0, 4); // Ambil 3 terbaru saja
+
+            setPrestasiPosts(filteredPosts);
+        } catch (error) {
+            console.error("Error fetching prestasi posts:", error);
+            toast.error("Gagal memuat data prestasi");
+        } finally {
+            setLoadingPrestasi(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchHeadSpeech();
+        fetchTeachers();
+        fetchVisiMisi();
+        fetchPrestasiPosts();
+    }, []);
+
+    // Filter to find the principal (more flexible search)
+    const principal = teachersData.find(teacher =>
+        teacher?.keterangan_guru?.toLowerCase().match(/kepala|head|principal/)
+    );
+
+    // Filter other teachers (excluding principal)
+    const otherTeachers = teachersData.filter(teacher =>
+        !teacher?.keterangan_guru?.toLowerCase().match(/kepala|head|principal/)
+    );
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <Spinner className="h-12 w-12" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <Typography variant="h4" color="red">
+                    {error}
+                </Typography>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -33,7 +134,7 @@ const HeadSpeechPage = () => {
                         <Card className="shadow-lg overflow-hidden">
                             <div className="relative h-64 bg-gray-800">
                                 <img
-                                    src="/images/school-building.jpg"
+                                    src={back}
                                     alt="Gedung SDN Gadungan 02"
                                     className="w-full h-full object-cover opacity-80"
                                 />
@@ -46,52 +147,98 @@ const HeadSpeechPage = () => {
                             </div>
 
                             <CardBody className="p-8">
-                                <div className="flex flex-col md:flex-row gap-8 items-center mb-10">
-                                    <div className="relative">
-                                        <Avatar
-                                            src="/images/principal.jpg"
-                                            alt="Kepala Sekolah"
-                                            size="xxl"
-                                            className="border-4 border-white shadow-lg"
-                                        />
-                                        <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-1 rounded-full shadow-sm">
-                                            <Typography variant="small" className="font-bold flex items-center gap-1">
-                                                <UserGroupIcon className="h-4 w-4" />
-                                                Kepala Sekolah
-                                            </Typography>
+                                {principal ? (
+                                    <>
+                                        <div className="flex flex-col md:flex-row gap-8 items-center mb-10">
+                                            <div className="relative">
+                                                <Avatar
+                                                    src={principal.pas_foto || "/images/default-avatar.jpg"}
+                                                    alt={principal.nama_guru || "Kepala Sekolah"}
+                                                    size="xxl"
+                                                    className="border-4 border-white shadow-lg"
+                                                />
+                                                <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-1 rounded-full shadow-sm">
+                                                    <Typography variant="small" className="font-bold flex items-center gap-1">
+                                                        <BuildingOfficeIcon className="h-10 w-10" />
+                                                        Kepala Sekolah
+                                                    </Typography>
+                                                </div>
+                                            </div>
+                                            <div className="text-center md:text-left">
+                                                <Typography variant="h3" className="text-2xl font-bold text-gray-900 mb-1">
+                                                    {principal.nama_guru || "Nama Kepala Sekolah"}
+                                                </Typography>
+                                                <Typography variant="paragraph" className="text-gray-600 mb-1">
+                                                    {principal.keterangan_guru || "Kepala Sekolah"}
+                                                </Typography>
+                                                <Typography variant="paragraph" className="text-gray-600 mb-4">
+                                                    {principal.nip || "-"}
+                                                </Typography>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="text-center md:text-left">
-                                        <Typography variant="h3" className="text-2xl font-bold text-gray-900 mb-1">
-                                            Dr. Siti Aminah, M.Pd
-                                        </Typography>
-                                        <Typography variant="paragraph" className="text-gray-600 mb-4">
-                                            Kepala Sekolah SDN Gadungan 02
-                                        </Typography>
-                                        <Button variant="filled" color="blue" className="flex items-center gap-2">
-                                            <BookOpenIcon className="h-5 w-5" />
-                                            Profil Lengkap
-                                        </Button>
-                                    </div>
-                                </div>
 
-                                <div className="space-y-6">
-                                    <Typography variant="paragraph" className="text-gray-700 text-lg leading-relaxed">
-                                        <span className="text-4xl font-bold text-blue-600 float-left mr-2 mt-1">S</span>
-                                        elamat datang di SDN Gadungan 02, sekolah yang berkomitmen untuk mencetak generasi yang cerdas, berkarakter, dan mampu menghadapi tantangan global. Kami percaya bahwa pendidikan yang berkualitas adalah kunci untuk membangun masa depan yang cerah.
+                                        <div className="space-y-6">
+                                            {speech ? (
+                                                <>
+                                                    <Typography
+                                                        variant="paragraph"
+                                                        className="text-gray-700 text-lg leading-relaxed whitespace-pre-line"
+                                                    >
+                                                        {speech.split('\n\n')[0]}
+                                                    </Typography>
+
+                                                    {/* Improved Tujuan Section */}
+                                                    <div className="my-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+                                                        <div className="flex items-start gap-4">
+                                                            <div className="bg-blue-100 p-3 rounded-full">
+                                                                <AcademicCapIcon className="h-6 w-6 text-blue-600" />
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <Typography variant="h5" className="text-blue-800 font-bold mb-3 flex items-center gap-2">
+                                                                    Tujuan Pendidikan Kami
+                                                                </Typography>
+                                                                <ul className="space-y-3">
+                                                                    {visiMisi.text_tujuan && visiMisi.text_tujuan.length > 0 ? (
+                                                                        visiMisi.text_tujuan.map((item, index) => (
+                                                                            <li
+                                                                                key={index}
+                                                                                className="flex items-start gap-3 group"
+                                                                            >
+                                                                                <span className="mt-1.5 w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 group-hover:bg-blue-800 transition-colors"></span>
+                                                                                <Typography variant="paragraph" className="text-gray-700 group-hover:text-gray-900 transition-colors">
+                                                                                    {item}
+                                                                                </Typography>
+                                                                            </li>
+                                                                        ))
+                                                                    ) : (
+                                                                        <Typography variant="small" className="italic text-gray-500">
+                                                                            Tujuan sekolah belum tersedia
+                                                                        </Typography>
+                                                                    )}
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <Typography
+                                                        variant="paragraph"
+                                                        className="text-gray-700 text-lg leading-relaxed whitespace-pre-line"
+                                                    >
+                                                        {speech.split('\n\n').slice(1).join('\n\n')}
+                                                    </Typography>
+                                                </>
+                                            ) : (
+                                                <Typography variant="paragraph" className="text-gray-700 text-lg leading-relaxed">
+                                                    Sambutan kepala sekolah belum tersedia.
+                                                </Typography>
+                                            )}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <Typography variant="paragraph" className="text-center py-8">
+                                        Data kepala sekolah tidak ditemukan
                                     </Typography>
-
-                                    <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-600 flex items-start gap-4">
-                                        <AcademicCapIcon className="h-6 w-6 text-blue-600 mt-1 flex-shrink-0" />
-                                        <Typography variant="paragraph" className="text-blue-800 italic font-medium">
-                                            "Dengan memanfaatkan teknologi sebagai alat bantu dalam proses pembelajaran, kami berusaha memberikan pengalaman belajar yang lebih interaktif dan menyenangkan bagi siswa."
-                                        </Typography>
-                                    </div>
-
-                                    <Typography variant="paragraph" className="text-gray-700 text-lg leading-relaxed">
-                                        Kami juga berkomitmen untuk menyediakan informasi yang transparan dan mudah diakses oleh seluruh warga sekolah dan masyarakat. Semoga dengan kerjasama yang baik di antara kita, kita bisa bersama-sama mendukung perkembangan pendidikan yang lebih baik dan meraih prestasi yang lebih gemilang.
-                                    </Typography>
-                                </div>
+                                )}
                             </CardBody>
                         </Card>
                     </div>
@@ -111,24 +258,31 @@ const HeadSpeechPage = () => {
                                 </div>
 
                                 <div className="space-y-4">
-                                    {teachers.map((teacher, index) => (
-                                        <div key={index} className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                                            <Avatar
-                                                src={teacher.photo}
-                                                alt={teacher.name}
-                                                size="md"
-                                                className="border-2 border-white shadow"
-                                            />
-                                            <div>
-                                                <Typography variant="h6" className="font-bold text-gray-800">
-                                                    {teacher.name}
-                                                </Typography>
-                                                <Typography variant="small" className="text-gray-600">
-                                                    {teacher.position}
-                                                </Typography>
+                                    {otherTeachers.length > 0 ? (
+                                        otherTeachers.map((teacher, index) => (
+                                            <div key={index} className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                                                <Avatar
+                                                    src={teacher.pas_foto || "/images/default-avatar.jpg"}
+                                                    alt={teacher.nama_guru || "Guru"}
+                                                    size="md"
+                                                    className="border-2 border-white shadow"
+                                                />
+                                                <div>
+                                                    <Typography variant="h6" className="font-bold text-gray-800">
+                                                        {teacher.nama_guru || "Nama Guru"}
+                                                    </Typography>
+                                                    <Typography variant="small" className="text-gray-600">
+                                                        {teacher.keterangan_guru || "Guru"}
+                                                    </Typography>
+
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        ))
+                                    ) : (
+                                        <Typography variant="small" className="text-gray-500 text-center py-4">
+                                            Tidak ada data guru
+                                        </Typography>
+                                    )}
                                 </div>
                             </CardBody>
                         </Card>
@@ -147,13 +301,15 @@ const HeadSpeechPage = () => {
 
                                 <div className="space-y-4">
                                     <div>
+
                                         <Typography variant="h5" className="font-bold mb-2 flex items-center gap-2">
                                             <BookOpenIcon className="h-5 w-5" />
                                             Visi
                                         </Typography>
                                         <Typography variant="paragraph" className="italic">
-                                            "Mencerdaskan kehidupan bangsa dengan pendidikan berkualitas"
+                                            {visiMisi.text_visi || "Visi sekolah belum tersedia"}
                                         </Typography>
+
                                     </div>
 
                                     <div>
@@ -162,18 +318,18 @@ const HeadSpeechPage = () => {
                                             Misi
                                         </Typography>
                                         <ul className="space-y-2">
-                                            <li className="flex items-start gap-2">
-                                                <span className="mt-1.5 w-2 h-2 bg-white rounded-full flex-shrink-0"></span>
-                                                <span>Membangun karakter siswa yang berakhlak mulia</span>
-                                            </li>
-                                            <li className="flex items-start gap-2">
-                                                <span className="mt-1.5 w-2 h-2 bg-white rounded-full flex-shrink-0"></span>
-                                                <span>Mengembangkan potensi akademik dan non-akademik</span>
-                                            </li>
-                                            <li className="flex items-start gap-2">
-                                                <span className="mt-1.5 w-2 h-2 bg-white rounded-full flex-shrink-0"></span>
-                                                <span>Menghasilkan lulusan yang kompetitif</span>
-                                            </li>
+                                            {visiMisi.text_misi && visiMisi.text_misi.length > 0 ? (
+                                                visiMisi.text_misi.map((item, index) => (
+                                                    <li key={index} className="flex items-start gap-2">
+                                                        <span className="mt-1.5 w-2 h-2 bg-white rounded-full flex-shrink-0"></span>
+                                                        <span>{item}</span>
+                                                    </li>
+                                                ))
+                                            ) : (
+                                                <Typography variant="small" className="italic">
+                                                    Misi sekolah belum tersedia
+                                                </Typography>
+                                            )}
                                         </ul>
                                     </div>
                                 </div>
@@ -192,26 +348,33 @@ const HeadSpeechPage = () => {
                                     </Typography>
                                 </div>
 
-                                <div className="space-y-3">
-                                    <div className="p-3 bg-amber-50 rounded-lg">
-                                        <Typography variant="small" className="font-bold text-amber-800 flex items-center gap-2">
-                                            <TrophyIcon className="h-4 w-4" />
-                                            Juara 1 Lomba Sains
-                                        </Typography>
-                                        <Typography variant="small" className="text-gray-600">
-                                            12 Mei 2023
-                                        </Typography>
+                                {loading ? (
+                                    <div className="flex justify-center py-4">
+                                        <Spinner className="h-6 w-6" />
                                     </div>
-                                    <div className="p-3 bg-amber-50 rounded-lg">
-                                        <Typography variant="small" className="font-bold text-amber-800 flex items-center gap-2">
-                                            <TrophyIcon className="h-4 w-4" />
-                                            Sekolah Adiwiyata
-                                        </Typography>
-                                        <Typography variant="small" className="text-gray-600">
-                                            28 Agustus 2023
-                                        </Typography>
+                                ) : prestasiPosts.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {prestasiPosts.map((post, index) => (
+                                            <div key={index} className="p-3 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors">
+                                                <Typography variant="small" className="font-bold text-amber-800 flex items-center gap-2">
+                                                    <TrophyIcon className="h-4 w-4" />
+                                                    {post.title_postingan}
+                                                </Typography>
+                                                <Typography variant="small" className="text-gray-600">
+                                                    {new Date(post.created_at).toLocaleDateString('id-ID', {
+                                                        day: 'numeric',
+                                                        month: 'long',
+                                                        year: 'numeric'
+                                                    })}
+                                                </Typography>
+                                            </div>
+                                        ))}
                                     </div>
-                                </div>
+                                ) : (
+                                    <Typography variant="small" className="text-gray-500 text-center py-4">
+                                        Tidak ada data prestasi
+                                    </Typography>
+                                )}
                             </CardBody>
                         </Card>
                     </div>

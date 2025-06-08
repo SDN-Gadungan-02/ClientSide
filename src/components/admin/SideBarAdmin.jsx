@@ -43,17 +43,18 @@ const SideBarAdmin = () => {
             roles: ['superadmin']
         },
         {
-            name: 'Kelola Postingan',
-            icon: <NewspaperIcon className="h-5 w-5" />,
-            path: '/admin/kelola-postingan',
-            roles: ['admin', 'superadmin']
-        },
-        {
             name: 'Kelola Pengguna',
             icon: <UserGroupIcon className="h-5 w-5" />,
             path: '/admin/kelola-pengguna',
             roles: ['superadmin']
         },
+        {
+            name: 'Kelola Postingan',
+            icon: <NewspaperIcon className="h-5 w-5" />,
+            path: '/admin/kelola-postingan',
+            roles: ['admin', 'superadmin']
+        },
+
         {
             name: 'Kelola Guru',
             icon: <AcademicCapIcon className="h-5 w-5" />,

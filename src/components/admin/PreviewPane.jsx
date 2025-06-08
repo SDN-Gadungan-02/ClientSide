@@ -101,13 +101,26 @@ const PreviewPane = ({
     }, []);
 
     // Di bagian handleAddHotspotButton
-    const handleAddHotspotButton = () => {
-        if (!pannellumRef.current || !editMode || !onAddHotspot) return;
+    const handleAddHotspotButton = (e) => {
+        e.stopPropagation(); // Penting untuk mencegah event bubbling
+        if (!pannellumRef.current || !editMode || !onAddHotspot) {
+            console.log('Cannot add hotspot:', {
+                hasViewer: !!pannellumRef.current,
+                editMode,
+                hasCallback: !!onAddHotspot
+            });
+            return;
+        }
 
-        const pitch = parseFloat(pannellumRef.current.getPitch().toFixed(6));
-        const yaw = parseFloat(pannellumRef.current.getYaw().toFixed(6));
+        try {
+            const pitch = parseFloat(pannellumRef.current.getPitch().toFixed(6));
+            const yaw = parseFloat(pannellumRef.current.getYaw().toFixed(6));
 
-        onAddHotspot({ pitch, yaw });
+            console.log('Adding hotspot at:', { pitch, yaw });
+            onAddHotspot({ pitch, yaw });
+        } catch (error) {
+            console.error('Error getting viewer position:', error);
+        }
     };
 
     // Di useEffect inisialisasi viewer
@@ -173,7 +186,7 @@ const PreviewPane = ({
 
     // Di dalam updateHotspotsInViewer
     const updateHotspotsInViewer = useCallback(() => {
-        if (!viewerInstance.current) return;
+        if (!viewerInstanccxcurrent) return;
 
         try {
             // Hapus semua hotspot yang ada
@@ -229,6 +242,7 @@ const PreviewPane = ({
             console.error('Error updating hotspots:', e);
         }
     }, [hotspots, panoramas, onSelectPanorama, showHotspotLabels, activeHotspot]);
+
 
     // Update hotspots when they change
     useEffect(() => {

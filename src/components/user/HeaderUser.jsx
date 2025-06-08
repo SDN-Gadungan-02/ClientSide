@@ -27,11 +27,11 @@ export default function Header() {
     }, []);
 
     const navItems = [
-        { name: "Beranda", href: "#" },
-        { name: "Visi dan Misi", href: "#visi" },
-        { name: "Virtual Tour 360", href: "#virtual" },
-        { name: "Profil Sekolah", href: "#profil" },
-        { name: "Postingan", href: "#postingan" },
+        { name: "Beranda", href: "/" },
+        { name: "Visi dan Misi", href: "visi-misi" },
+        { name: "Virtual Tour 360", href: "virtual-tour" },
+        { name: "Profil Sekolah", href: "sejarah-sekolah" },
+        { name: "Postingan", href: "postingan" },
     ];
 
     return (

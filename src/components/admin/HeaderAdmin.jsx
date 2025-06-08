@@ -6,10 +6,10 @@ import { useLocation } from 'react-router-dom';
 
 const pageTitles = {
     '/admin/dashboard': 'Dashboard',
-    '/admin/posts': 'Kelola Postingan',
-    '/admin/users': 'Kelola Pengguna',
-    '/admin/teacher': 'Kelola Guru',
-    '/admin/panorama': 'Kelola Panorama'
+    '/admin/kelola-postingan': 'Kelola Postingan',
+    '/admin/kelola-pengguna': 'Kelola Pengguna',
+    '/admin/kelola-guru': 'Kelola Guru',
+    '/admin/kelola-virtual-tour': 'Kelola Panorama'
 };
 
 const HeaderAdmin = () => {
@@ -24,7 +24,7 @@ const HeaderAdmin = () => {
                     {/* Judul Halaman */}
                     <div className="flex items-center">
                         <Typography variant="h5" className="text-gray-800 font-medium">
-                            {pageTitles[currentPath] || 'Dashboard'}
+                            {pageTitles[currentPath] || Object.values(pageTitles).find(title => currentPath.startsWith(Object.keys(pageTitles).find(path => currentPath.startsWith(path))))}
                         </Typography>
                     </div>
 

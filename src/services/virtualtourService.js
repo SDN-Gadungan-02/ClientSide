@@ -1,12 +1,10 @@
 import api from '../utils/api';
 
 const VirtualTourService = {
-    // Pastikan transformasi data hotspot benar
     getPanoramas: async (search = '') => {
         try {
             const response = await api.get('/virtualtour', { params: { search } });
 
-            // Pastikan response.data.data adalah array
             if (!Array.isArray(response.data.data)) {
                 throw new Error('Invalid data format from server');
             }
@@ -89,7 +87,6 @@ const VirtualTourService = {
         }
     },
 
-    // virtualtourService.js
     deleteVirtualTour: async (id) => {
         try {
             const response = await api.delete(`/virtualtour/${id}`);
@@ -100,7 +97,6 @@ const VirtualTourService = {
         }
     },
 
-    // virtualtourService.js - Perbaikan fungsi createHotspot
     createHotspot: async (panoramaId, hotspotData) => {
         try {
             const response = await api.post(`/virtualtour/${panoramaId}/hotspots`, {
@@ -119,7 +115,6 @@ const VirtualTourService = {
 
     updateHotspot: async (panoramaId, hotspotId, hotspotData) => {
         try {
-            // Ensure pitch and yaw are numbers
             const pitch = parseFloat(hotspotData.pitch);
             const yaw = parseFloat(hotspotData.yaw);
 

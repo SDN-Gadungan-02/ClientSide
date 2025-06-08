@@ -12,7 +12,12 @@ import {
     InformationCircleIcon, PhotoIcon
 } from "@heroicons/react/24/solid";
 
+
+
 const ManagePostPage = () => {
+
+    const [searchDebounce, setSearchDebounce] = useState(null);
+
     const [state, setState] = useState({
         posts: [],
         loading: true,
@@ -55,10 +60,10 @@ const ManagePostPage = () => {
         return `${window.location.origin}/${cleanPath}`;
     };
 
-    const fetchPosts = async () => {
+    const fetchPosts = async (search = "") => {
         try {
             setStateValue("loading", true);
-            const data = await PostService.getPosts(searchTerm);
+            const data = await PostService.getPosts(search);
             setStateValue("posts", data.data || []);
         } catch (error) {
             console.error("Error fetching posts:", error);
@@ -71,6 +76,27 @@ const ManagePostPage = () => {
             setStateValue("loading", false);
         }
     };
+
+    useEffect(() => {
+        // Clear previous debounce timer
+        if (searchDebounce) {
+            clearTimeout(searchDebounce);
+        }
+
+        // Set new debounce timer
+        const timer = setTimeout(() => {
+            fetchPosts(searchTerm);
+        }, 500); // 500ms delay
+
+        setSearchDebounce(timer);
+
+        // Cleanup function
+        return () => {
+            if (searchDebounce) {
+                clearTimeout(searchDebounce);
+            }
+        };
+    }, [searchTerm]);
 
     const handleSubmit = async () => {
         const requiredFields = [
@@ -96,10 +122,22 @@ const ManagePostPage = () => {
             formData.append("kategori", currentPost.kategori);
             formData.append("keyword", currentPost.keyword);
 
+            // Dapatkan user ID dari localStorage atau context
+            const user = JSON.parse(localStorage.getItem("user"));
+            if (user && user.id) {
+                formData.append("author", user.id);
+            }
+
+            // Gunakan field name 'thumbnail_postingan'
             if (imageFile) {
-                formData.append("thumbnail", imageFile);
-            } else {
-                formData.append("keepExistingImage", isEdit ? "true" : "false");
+                formData.append("thumbnail_postingan", imageFile);
+            } else if (isEdit) {
+                formData.append("keepExistingImage", "true");
+            }
+
+            // Log FormData untuk debugging
+            for (let [key, value] of formData.entries()) {
+                console.log(key, value);
             }
 
             if (isEdit) {
@@ -113,8 +151,11 @@ const ManagePostPage = () => {
             toast.success(`Postingan berhasil ${isEdit ? "diupdate" : "dibuat"}`);
         } catch (error) {
             console.error("Error:", error);
-            toast.error(error.response?.data?.message ||
-                `Gagal ${isEdit ? "mengupdate" : "membuat"} postingan`);
+            if (error.response) {
+                console.error("Response data:", error.response.data);
+                toast.error(error.response?.data?.message ||
+                    `Gagal ${isEdit ? "mengupdate" : "membuat"} postingan`);
+            }
         } finally {
             setStateValue("isSubmitting", false);
         }
@@ -176,12 +217,24 @@ const ManagePostPage = () => {
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
-        if (file) {
-            setStateValue("imageFile", file);
-            const reader = new FileReader();
-            reader.onloadend = () => setStateValue("imagePreview", reader.result);
-            reader.readAsDataURL(file);
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.match('image.*')) {
+            toast.warning('Hanya file gambar yang diperbolehkan');
+            return;
         }
+
+        // Validate file size (e.g., 2MB limit)
+        if (file.size > 2 * 1024 * 1024) {
+            toast.warning('Ukuran gambar maksimal 2MB');
+            return;
+        }
+
+        setStateValue("imageFile", file);
+        const reader = new FileReader();
+        reader.onloadend = () => setStateValue("imagePreview", reader.result);
+        reader.readAsDataURL(file);
     };
 
     const toggleDescription = (id) => {
@@ -207,11 +260,11 @@ const ManagePostPage = () => {
 
     const renderTable = () => (
         <div className="overflow-x-auto">
-            <table className="w-full min-w-max table-auto">
+            <table className="w-full min-w-max table-auto text-center"> {/* Tambahkan text-center di sini */}
                 <thead>
                     <tr>
                         {["Thumbnail", "Judul", "Deskripsi", "Kategori", "Aksi"].map((head) => (
-                            <th key={head} className="border-b border-blue-gray-100 bg-blue-gray-50 p-4">
+                            <th key={head} className="border-b border-blue-gray-100 bg-blue-gray-50 p-4 text-center"> {/* Tambahkan text-center */}
                                 <Typography variant="small" className="font-normal leading-none opacity-70">
                                     {head}
                                 </Typography>
@@ -222,50 +275,44 @@ const ManagePostPage = () => {
                 <tbody>
                     {posts.map((post) => (
                         <tr key={post.id}>
-                            <td className="p-4 border-b border-blue-gray-50">
-                                <Avatar
-                                    src={getImageUrl(post.thumbnail_postingan)}
-                                    alt={post.title_postingan}
-                                    size="lg"
-                                    variant="rounded"
-                                    onError={handleImageError}
-                                />
+                            <td className="p-4 border-b border-blue-gray-50 text-center"> {/* Tambahkan text-center */}
+                                <div className="flex justify-center"> {/* Tambahkan div wrapper untuk avatar */}
+                                    <Avatar
+                                        src={getImageUrl(post.thumbnail_postingan)}
+                                        alt={post.title_postingan}
+                                        size="lg"
+                                        variant="rounded"
+                                        onError={handleImageError}
+                                    />
+                                </div>
                             </td>
-                            <td className="p-4 border-b border-blue-gray-50">
+                            <td className="p-4 border-b border-blue-gray-50 text-center"> {/* Tambahkan text-center */}
                                 <Typography variant="small" className="font-medium">
                                     {post.title_postingan}
                                 </Typography>
                             </td>
-                            <td className="p-4 border-b border-blue-gray-50">
-                                <div className="flex items-start">
+                            <td className="p-4 border-b border-blue-gray-50 text-center"> {/* Tambahkan text-center */}
+                                <div className="flex items-center justify-center"> {/* Perubahan di sini */}
                                     <Typography variant="small" className="font-normal">
                                         {showFullDescription[post.id]
                                             ? post.deskripsi_postingan
-                                            : `${post.deskripsi_postingan.substring(0, 50)}...`}
+                                            : `${post.deskripsi_postingan.substring(0, 100)}...`}
                                     </Typography>
-                                    <Tooltip content={showFullDescription[post.id] ? "Sembunyikan" : "Lihat Selengkapnya"}>
-                                        <IconButton
-                                            variant="text"
-                                            size="sm"
-                                            onClick={() => toggleDescription(post.id)}
-                                            className="ml-2"
-                                        >
-                                            <InformationCircleIcon className="h-4 w-4" />
-                                        </IconButton>
-                                    </Tooltip>
                                 </div>
                             </td>
-                            <td className="p-4 border-b border-blue-gray-50">
-                                <Chip
-                                    value={post.kategori}
-                                    color={
-                                        post.kategori === "Pengumuman" ? "blue" :
-                                            post.kategori === "Prestasi" ? "green" : "amber"
-                                    }
-                                />
+                            <td className="p-4 border-b border-blue-gray-50 text-center"> {/* Tambahkan text-center */}
+                                <div className="flex justify-center"> {/* Tambahkan div wrapper untuk chip */}
+                                    <Chip
+                                        value={post.kategori}
+                                        color={
+                                            post.kategori === "Pengumuman" ? "blue" :
+                                                post.kategori === "Prestasi" ? "green" : "amber"
+                                        }
+                                    />
+                                </div>
                             </td>
-                            <td className="p-4 border-b border-blue-gray-50">
-                                <div className="flex gap-2">
+                            <td className="p-4 border-b border-blue-gray-50 text-center"> {/* Tambahkan text-center */}
+                                <div className="flex justify-center gap-2"> {/* Tambahkan justify-center */}
                                     <Tooltip content="Edit">
                                         <IconButton
                                             variant="text"
@@ -360,6 +407,8 @@ const ManagePostPage = () => {
                         icon={<MagnifyingGlassIcon className="h-5 w-5" />}
                         value={searchTerm}
                         onChange={(e) => setStateValue("searchTerm", e.target.value)}
+                        placeholder="Cari berdasarkan judul, deskripsi, atau kategori..."
+                        className="w-full md:w-1/2"
                     />
                 </div>
                 <Button className="flex items-center gap-2" onClick={handleOpen}>
@@ -380,6 +429,7 @@ const ManagePostPage = () => {
                     {isEdit ? "Edit Postingan" : "Tambah Postingan Baru"}
                 </DialogHeader>
                 <DialogBody divider className="overflow-y-auto max-h-[80vh]">
+
                     <div className="grid grid-cols-1 gap-6">
                         {renderImageUpload()}
                         <Input

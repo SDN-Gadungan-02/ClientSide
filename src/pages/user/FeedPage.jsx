@@ -1,48 +1,89 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Typography, Card, CardBody, Chip, Input, Select, Option, Button } from "@material-tailwind/react";
 import { MagnifyingGlassIcon, FunnelIcon, CalendarIcon } from "@heroicons/react/24/outline";
+import PostService from '../../services/postService';
+import { Link } from "react-router-dom";
 
 const FeedPage = () => {
-    // Data contoh postingan
-    const categories = ["Semua", "Prestasi Akademik", "Prestasi Non-Akademik", "Pengumuman"];
-    const posts = [
-        {
-            id: 1,
-            title: "Juara 1 Lomba Sains Tingkat Kabupaten",
-            thumbnail: "https://images.pexels.com/photos/371633/pexels-photo-371633.jpeg?cs=srgb&dl=clouds-country-daylight-371633.jpg&fm=jpg",
-            excerpt: "Siswa SDN Gadungan 02 meraih juara 1 dalam lomba sains tingkat kabupaten...",
-            date: "15 Agustus 2023",
-            category: "Prestasi Akademik",
-            tags: ["Sains", "Kompetisi"]
-        },
-        {
-            id: 2,
-            title: "Tim Voli Putra Juara Turnamen Sekolah Dasar",
-            thumbnail: "https://images.pexels.com/photos/371633/pexels-photo-371633.jpeg?cs=srgb&dl=clouds-country-daylight-371633.jpg&fm=jpg",
-            excerpt: "Tim voli putra SDN Gadungan 02 berhasil meraih juara 1 dalam turnamen antarsekolah...",
-            date: "10 Agustus 2023",
-            category: "Prestasi Non-Akademik",
-            tags: ["Olahraga", "Voli"]
-        },
-        {
-            id: 3,
-            title: "Pengumuman Pembelajaran Tatap Muka",
-            thumbnail: "https://images.pexels.com/photos/371633/pexels-photo-371633.jpeg?cs=srgb&dl=clouds-country-daylight-371633.jpg&fm=jpg",
-            excerpt: "Berdasarkan surat edaran dinas pendidikan, pembelajaran tatap muka akan dimulai...",
-            date: "5 Agustus 2023",
-            category: "Pengumuman",
-            tags: ["Info", "Sekolah"]
-        },
-        {
-            id: 4,
-            title: "Olimpiade Matematika Tingkat Kecamatan",
-            thumbnail: "https://images.pexels.com/photos/371633/pexels-photo-371633.jpeg?cs=srgb&dl=clouds-country-daylight-371633.jpg&fm=jpg",
-            excerpt: "Dua siswa kami berhasil masuk 10 besar dalam olimpiade matematika tingkat kecamatan...",
-            date: "1 Agustus 2023",
-            category: "Prestasi Akademik",
-            tags: ["Matematika", "Olimpiade"]
-        }
+    const [allPosts, setAllPosts] = useState([]); // Semua data dari API
+    const [filteredPosts, setFilteredPosts] = useState([]); // Data yang sudah difilter
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('Semua');
+    const [selectedMonth, setSelectedMonth] = useState('Semua');
+
+    const categories = ["Semua", "Pengumuman", "Prestasi", "Kegiatan"];
+    const months = [
+        "Semua",
+        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
     ];
+
+    // Fetch semua data awal
+    useEffect(() => {
+        fetchAllPosts();
+    }, []);
+
+    // Filter data ketika parameter berubah
+    useEffect(() => {
+        applyFilters();
+    }, [searchTerm, selectedCategory, selectedMonth, allPosts]);
+
+    const fetchAllPosts = async () => {
+        try {
+            setLoading(true);
+            const response = await PostService.getPosts();
+            setAllPosts(response.data || []);
+        } catch (error) {
+            console.error("Error fetching posts:", error);
+            setAllPosts([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const applyFilters = () => {
+        let results = [...allPosts];
+
+        // Filter berdasarkan search term
+        if (searchTerm) {
+            const searchLower = searchTerm.toLowerCase();
+            results = results.filter(post =>
+                post.title_postingan.toLowerCase().includes(searchLower) ||
+                post.deskripsi_postingan.toLowerCase().includes(searchLower)
+            );
+        }
+
+        // Filter berdasarkan kategori
+        if (selectedCategory !== 'Semua') {
+            results = results.filter(post =>
+                post.kategori === selectedCategory
+            );
+        }
+
+        // Filter berdasarkan bulan
+        if (selectedMonth !== 'Semua') {
+            const monthIndex = months.indexOf(selectedMonth);
+            results = results.filter(post => {
+                const postDate = new Date(post.created_at);
+                return postDate.getMonth() === monthIndex;
+            });
+        }
+
+        setFilteredPosts(results);
+    };
+
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value);
+    };
+
+    const handleCategoryChange = (value) => {
+        setSelectedCategory(value);
+    };
+
+    const handleMonthChange = (value) => {
+        setSelectedMonth(value);
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -58,86 +99,127 @@ const FeedPage = () => {
                 </div>
 
                 {/* Filter dan Pencarian */}
-                <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="md:col-span-2">
                         <Input
                             label="Cari postingan..."
                             icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+                            value={searchTerm}
+                            onChange={handleSearchChange}
+                            placeholder="Cari berdasarkan judul atau deskripsi..."
                         />
                     </div>
-                    <div className="">
-                        <Select label="Kategori" className="w-full">
+                    <div>
+                        <Select
+                            label="Kategori"
+                            value={selectedCategory}
+                            onChange={handleCategoryChange}
+                        >
                             {categories.map((cat, index) => (
                                 <Option key={index} value={cat}>
                                     {cat}
                                 </Option>
                             ))}
                         </Select>
-
+                    </div>
+                    <div>
+                        <Select
+                            label="Bulan"
+                            value={selectedMonth}
+                            onChange={handleMonthChange}
+                        >
+                            {months.map((month, index) => (
+                                <Option key={index} value={month}>
+                                    {month}
+                                </Option>
+                            ))}
+                        </Select>
                     </div>
                 </div>
+
+                {/* Loading State */}
+                {loading && (
+                    <div className="flex justify-center items-center py-12">
+                        <div className="flex items-center gap-2">
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                            <Typography variant="h6">Memuat data...</Typography>
+                        </div>
+                    </div>
+                )}
 
                 {/* Daftar Postingan */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {posts.map((post) => (
-                        <Card key={post.id} className="shadow-md hover:shadow-lg transition-shadow h-full flex flex-col">
-                            <div className="h-48 overflow-hidden">
-                                <img
-                                    src={post.thumbnail}
-                                    alt={post.title}
-                                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                                />
-                            </div>
-                            <CardBody className="flex flex-col flex-grow">
-                                <div className="mb-3">
-                                    <Chip
-                                        value={post.category}
-                                        color={
-                                            post.category === "Prestasi Akademik" ? "green" :
-                                                post.category === "Prestasi Non-Akademik" ? "blue" : "amber"
-                                        }
-                                        className="rounded-full text-xs"
-                                    />
-                                </div>
-                                <Typography variant="h5" className="mb-2 text-lg font-bold line-clamp-2">
-                                    {post.title}
-                                </Typography>
-                                <Typography variant="paragraph" className="mb-4 text-gray-600 text-sm line-clamp-3">
-                                    {post.excerpt}
-                                </Typography>
-                                <div className="flex items-center justify-between mt-auto">
-                                    <div className="flex items-center gap-2">
-                                        <CalendarIcon className="h-4 w-4 text-gray-500" />
-                                        <Typography variant="small" className="text-gray-600">
-                                            {post.date}
-                                        </Typography>
+                {!loading && (
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {filteredPosts.map((post) => (
+                                <Card key={post.id} className="shadow-md hover:shadow-lg transition-shadow h-full flex flex-col">
+                                    <div className="h-48 overflow-hidden">
+                                        <img
+                                            src={post.thumbnail_postingan || "/default-thumbnail.jpg"}
+                                            alt={post.title_postingan}
+                                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                                            onError={(e) => {
+                                                e.target.src = "/default-thumbnail.jpg";
+                                            }}
+                                        />
                                     </div>
-                                    <Button variant="text" size="sm" className="p-0 text-blue-600">
-                                        Baca Selengkapnya
-                                    </Button>
-                                </div>
-                            </CardBody>
-                        </Card>
-                    ))}
-                </div>
+                                    <CardBody className="flex flex-col flex-grow">
+                                        <div className="mb-3">
+                                            <Chip
+                                                value={post.kategori}
+                                                color={
+                                                    post.kategori === "Prestasi" ? "green" :
+                                                        post.kategori === "Pengumuman" ? "blue" :
+                                                            post.kategori === "Kegiatan" ? "amber" : "gray"
+                                                }
+                                                className="rounded-full text-xs"
+                                            />
+                                        </div>
+                                        <Typography variant="h5" className="mb-2 text-lg font-bold line-clamp-2">
+                                            {post.title_postingan}
+                                        </Typography>
+                                        <Typography variant="paragraph" className="mb-4 text-gray-600 text-sm line-clamp-3">
+                                            {post.deskripsi_postingan}
+                                        </Typography>
+                                        <div className="flex items-center justify-between mt-auto">
+                                            <div className="flex items-center gap-2">
+                                                <CalendarIcon className="h-4 w-4 text-gray-500" />
+                                                <Typography variant="small" className="text-gray-600">
+                                                    {new Date(post.created_at).toLocaleDateString('id-ID', {
+                                                        day: 'numeric',
+                                                        month: 'long',
+                                                        year: 'numeric'
+                                                    })}
+                                                </Typography>
+                                            </div>
+                                            <Link
+                                                to={`/postingan/${post.id}`}
+                                                className="p-0 text-blue-600 text-sm hover:underline"
+                                            >
+                                                Baca Selengkapnya
+                                            </Link>
+                                        </div>
+                                    </CardBody>
+                                </Card>
+                            ))}
+                        </div>
 
-                {/* Pagination */}
-                <div className="mt-12 flex justify-center">
-                    <div className="flex items-center gap-2">
-                        <Button variant="text" className="rounded-full w-10 h-10 p-0">
-                            1
-                        </Button>
-                        <Button variant="text" className="rounded-full w-10 h-10 p-0">
-                            2
-                        </Button>
-                        <Button variant="text" className="rounded-full w-10 h-10 p-0">
-                            3
-                        </Button>
-                        <Button variant="text" className="rounded-full w-10 h-10 p-0">
-                            ...
-                        </Button>
-                    </div>
-                </div>
+                        {/* Empty State */}
+                        {filteredPosts.length === 0 && !loading && (
+                            <div className="text-center py-12">
+                                <div className="flex flex-col items-center justify-center">
+                                    <FunnelIcon className="h-12 w-12 text-gray-400 mb-4" />
+                                    <Typography variant="h5" className="text-gray-500 mb-2">
+                                        Tidak ada postingan yang sesuai dengan filter
+                                    </Typography>
+                                    <Typography variant="small" className="text-gray-400">
+                                        Coba ubah kriteria pencarian Anda
+                                    </Typography>
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
             </div>
         </div>
     );

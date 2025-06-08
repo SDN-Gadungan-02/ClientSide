@@ -3,20 +3,41 @@ import api from '../utils/api';
 const PostService = {
     getPosts: async (searchTerm = '') => {
         try {
-            const response = await api.get(`/posts?search=${encodeURIComponent(searchTerm)}`);
+            const response = await api.get(`/posts`, {
+                params: {
+                    search: searchTerm,
+                    category: '',
+                    month: ''
+                }
+            });
             return response.data;
         } catch (error) {
             throw error;
         }
     },
 
+    // PostService.js
+    getPostById: async (id) => {
+        try {
+            console.log(`Fetching post with ID: ${id}`);
+            const response = await api.get(`/posts/${id}`);
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching post:", error);
+            throw error;
+        }
+    },
+
     createPost: async (formData) => {
         try {
-            const response = await api.post('/posts', formData, {
+            const config = {
                 headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
+                    'Content-Type': 'multipart/form-data',
+                },
+                transformRequest: (data) => data, // Prevent axios from transforming FormData
+            };
+
+            const response = await api.post('/posts', formData, config);
             return response.data;
         } catch (error) {
             throw error;

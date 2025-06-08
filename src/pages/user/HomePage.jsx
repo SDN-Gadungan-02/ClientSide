@@ -1,90 +1,240 @@
-// src/pages/HomePage.jsx
-import React from "react";
-import { Typography, Card, CardBody, Carousel, CardHeader, CardFooter, Button } from "@material-tailwind/react";
+import React, { useState, useEffect } from "react";
+import { Typography, Card, CardBody, Chip, Button } from "@material-tailwind/react";
 import { NewspaperIcon, CalendarIcon, UserGroupIcon, AcademicCapIcon } from "@heroicons/react/24/solid";
+import { Link } from "react-router-dom";
 
 import JumbotronUser from "../../components/user/JumbotronUser";
 import ContactUser from "../../components/user/ContactUser";
+import VisiMisiService from "../../services/visiMisiService";
+import PostService from "../../services/postService";
 
 export default function HomePage() {
-    const news = [
-        {
-            category: "Visi",
-            value: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries,",
-        },
-        {
-            category: "Misi",
-            value: "Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites",
-        },
-        {
-            category: "Tujuan",
-            value: "There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even slightly believable. If you are going to use a passage of Lorem Ipsum, you need to be sure",
-        },
-    ];
+    const [visiMisi, setVisiMisi] = useState({
+        text_visi: "Memuat...",
+        text_misi: ["Memuat..."],
+        text_tujuan: ["Memuat..."]
+    });
 
-    const features = [
-        {
-            icon: <AcademicCapIcon className="h-10 w-10 text-blue-600" />,
-            title: "Akademik Unggul",
-            description: "Kurikulum berbasis kompetensi dengan pengembangan karakter",
-        },
-        {
-            icon: <UserGroupIcon className="h-10 w-10 text-blue-600" />,
-            title: "Ekstrakurikuler",
-            description: "Beragam kegiatan pengembangan minat dan bakat siswa",
-        },
-        {
-            icon: <CalendarIcon className="h-10 w-10 text-blue-600" />,
-            title: "Kalender Akademik",
-            description: "Jadwal kegiatan pembelajaran selama tahun ajaran",
-        },
-        {
-            icon: <NewspaperIcon className="h-10 w-10 text-blue-600" />,
-            title: "Berita Terkini",
-            description: "Informasi terbaru seputar kegiatan sekolah",
-        },
-    ];
+    const [posts, setPosts] = useState([]);
+    const [loading, setLoading] = useState({
+        visiMisi: true,
+        posts: true
+    });
+    const [error, setError] = useState({
+        visiMisi: null,
+        posts: null
+    });
+
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                // Load Visi Misi
+                const response = await VisiMisiService.getVisiMisi();
+                const data = response?.data || response;
+
+                const processTextArray = (text) => {
+                    if (!text) return [];
+                    if (Array.isArray(text)) return text.filter(item => item.trim());
+                    return text.split('|')
+                        .map(item => item.trim())
+                        .filter(item => item && !item.toLowerCase().includes("belum tersedia"));
+                };
+
+                setVisiMisi({
+                    text_visi: data.text_visi || "Visi sekolah belum tersedia",
+                    text_misi: processTextArray(data.text_misi).length > 0
+                        ? processTextArray(data.text_misi)
+                        : ["Misi sekolah belum tersedia"],
+                    text_tujuan: processTextArray(data.text_tujuan).length > 0
+                        ? processTextArray(data.text_tujuan)
+                        : ["Tujuan sekolah belum tersedia"]
+                });
+
+                setLoading(prev => ({ ...prev, visiMisi: false }));
+            } catch (err) {
+                console.error("Error loading visi misi:", err);
+                setError(prev => ({
+                    ...prev,
+                    visiMisi: err.response?.data?.message || err.message
+                }));
+                setLoading(prev => ({ ...prev, visiMisi: false }));
+                setVisiMisi({
+                    text_visi: "Visi sekolah belum tersedia",
+                    text_misi: ["Misi sekolah belum tersedia"],
+                    text_tujuan: ["Tujuan sekolah belum tersedia"]
+                });
+            }
+
+            try {
+                // Load Posts
+                const response = await PostService.getPosts();
+                console.log('Full Posts Response:', response); // Debugging
+
+                // Pastikan kita mengakses data dengan benar
+                const postsData = response.data?.data || response?.data || response;
+                console.log('Extracted Posts Data:', postsData); // Debugging
+
+                // Pastikan postsData adalah array
+                const postsArray = Array.isArray(postsData) ? postsData : [];
+                console.log('Posts Array:', postsArray); // Debugging
+
+                // Format data dengan pengecekan null/undefined
+                const formattedPosts = postsArray.map(post => ({
+                    id: post.id || Math.random().toString(36).substr(2, 9),
+                    title: post.title_postingan || 'Judul tidak tersedia',
+                    excerpt: post.deskripsi_postingan || 'Deskripsi tidak tersedia',
+                    category: post.kategori || 'Umum',
+                    created_at: post.created_at || new Date().toISOString(),
+                    thumbnail: post.thumbnail_postingan || 'https://source.unsplash.com/random/600x400?sig=1&school'
+                }));
+
+                console.log('Formatted Posts:', formattedPosts); // Debugging
+
+                setPosts(formattedPosts.slice(0, 4));
+                setLoading(prev => ({ ...prev, posts: false }));
+            } catch (err) {
+                console.error("Error loading posts:", err);
+                setError(prev => ({ ...prev, posts: err.message }));
+                setLoading(prev => ({ ...prev, posts: false }));
+
+                // Fallback data
+                setPosts([
+                    {
+                        id: 1,
+                        title: "Contoh Postingan 1",
+                        excerpt: "Ini contoh postingan ketika API bermasalah",
+                        category: "Informasi",
+                        created_at: new Date().toISOString(),
+                        thumbnail: "https://source.unsplash.com/random/600x400?sig=1&school"
+                    },
+                    {
+                        id: 2,
+                        title: "Contoh Postingan 2",
+                        excerpt: "Ini contoh postingan kedua",
+                        category: "Pengumuman",
+                        created_at: new Date().toISOString(),
+                        thumbnail: "https://source.unsplash.com/random/600x400?sig=2&classroom"
+                    }
+                ]);
+            }
+        };
+
+        loadData();
+    }, []);
+
+    const renderVisiMisiCard = (title, content) => {
+        return (
+            <div className="relative group flex flex-col items-center h-full">
+                <div className="absolute -top-3 w-1/2 z-10 px-2">
+                    <div className="bg-white text-blackColor text-base font-semibold px-4 py-2 rounded-tr-lg rounded-tl-lg border-gray-200 text-center mx-auto max-w-[90%]">
+                        {title}
+                    </div>
+                </div>
+                <Card className="hover:shadow-md transition-all duration-300 w-full h-full pt-6">
+                    <CardBody className="h-full flex flex-col p-4">
+                        {Array.isArray(content) ? (
+                            <ul className="space-y-2">
+                                {content.map((item, index) => (
+                                    <li key={index} className="flex items-start">
+                                        <span className="mr-2">•</span>
+                                        <Typography variant="medium" className="whitespace-pre-line">
+                                            {item}
+                                        </Typography>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <Typography variant="medium" className="text-center whitespace-pre-line">
+                                {content}
+                            </Typography>
+                        )}
+                    </CardBody>
+                </Card>
+            </div>
+        );
+    };
+
+    const renderPostCard = (post) => {
+        return (
+            <Card key={post.id} className="shadow-md hover:shadow-lg transition-shadow h-full flex flex-col">
+                <div className="h-48 overflow-hidden">
+                    <img
+                        src={post.thumbnail}
+                        alt={post.title}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                            e.target.src = 'https://source.unsplash.com/random/600x400?sig=1&school';
+                        }}
+                    />
+                </div>
+                <CardBody className="flex flex-col flex-grow">
+                    <div className="mb-3">
+                        <Chip
+                            value={post.category}
+                            color={
+                                post.category === "Prestasi Akademik" ? "green" :
+                                    post.category === "Prestasi Non-Akademik" ? "blue" : "amber"
+                            }
+                            className="rounded-full text-xs"
+                        />
+                    </div>
+                    <Typography variant="h5" className="mb-2 text-lg font-bold line-clamp-2">
+                        {post.title}
+                    </Typography>
+                    <Typography variant="paragraph" className="mb-4 text-gray-600 text-sm line-clamp-3">
+                        {post.excerpt}
+                    </Typography>
+                    <div className="flex items-center justify-between mt-auto">
+                        <div className="flex items-center gap-2">
+                            <CalendarIcon className="h-4 w-4 text-gray-500" />
+                            <Typography variant="small" className="text-gray-600">
+                                {new Date(post.created_at).toLocaleDateString('id-ID', {
+                                    day: 'numeric',
+                                    month: 'long',
+                                    year: 'numeric'
+                                })}
+                            </Typography>
+                        </div>
+                        <Link
+                            to={`/postingan/${post.id}`}
+                            className="p-0 text-blue-600 text-sm hover:underline"
+                        >
+                            Baca Selengkapnya
+                        </Link>
+                    </div>
+                </CardBody>
+            </Card>
+        );
+    };
 
     return (
         <div className="relative">
-
-            {/* Konten Utama */}
             <div className="relative z-10">
                 {/* Hero Section */}
                 <div className="bg-gray-50">
                     <JumbotronUser />
                 </div>
+
                 {/* Visi Misi */}
                 <div className="py-12 bg-gray-50">
                     <div className="container mx-auto px-4 md:px-20 lg:px-72">
-                        <Typography variant="h3" className="text-center mb-8 lg:mb-12 ">
+                        <Typography variant="h3" className="text-center mb-8 lg:mb-12">
                             Visi Misi & Tujuan Sekolah
                         </Typography>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 gap-y-6 lg:gap-3"> {/* Jarak lebih rapat di lg */}
-                            {news.map((item, index) => (
-                                <div key={index} className="relative group flex flex-col items-center h-full">
-                                    {/* Kapsul Category - Lebar penuh dan mepet */}
-                                    <div className="absolute -top-3 w-1/2 z-10 px-2"> {/* px-2 untuk sedikit spacing */}
-                                        <div className="bg-white text-blackColor text-base font-semibold px-4 py-2 rounded-tr-lg rounded-tl-lg  border-gray-200 text-center mx-auto max-w-[90%]">
-                                            {item.category}
-                                        </div>
-                                    </div>
-
-                                    {/* Card dengan tinggi seragam */}
-                                    <Card className="hover:shadow-md transition-all duration-300 w-full h-full pt-6"> {/* h-full untuk tinggi sama */}
-                                        <CardBody className="h-full flex flex-col p-4">
-                                            <Typography variant="medium" className="mb-2 text-center">
-                                                {item.value}
-                                            </Typography>
-                                        </CardBody>
-                                    </Card>
-                                </div>
-                            ))}
-                        </div>
+                        {loading.visiMisi ? (
+                            <div className="text-center">Memuat visi misi...</div>
+                        ) : error.visiMisi ? (
+                            <div className="text-center text-red-500">Error: {error.visiMisi}</div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 gap-y-6 lg:gap-3">
+                                {renderVisiMisiCard("Visi", visiMisi.text_visi)}
+                                {renderVisiMisiCard("Misi", visiMisi.text_misi)}
+                                {renderVisiMisiCard("Tujuan", visiMisi.text_tujuan)}
+                            </div>
+                        )}
                     </div>
                 </div>
-                {/* overlay image */}
 
                 {/* Postingan */}
                 <div className="py-12 bg-gray-50">
@@ -93,88 +243,27 @@ export default function HomePage() {
                             Postingan Terbaru
                         </Typography>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-6 gap-y-12">
-                            {[
-                                {
-                                    id: 1,
-                                    title: "Penerimaan Peserta Didik Baru 2023",
-                                    date: "15 Mei 2023",
-                                    excerpt: "Pendaftaran PPDB  SDN GADUNGAN 2 Tahun Ajaran 2023/2024 telah dibuka.",
-                                    image: "https://source.unsplash.com/random/1600x900?sig=3&library"
-                                },
-                                {
-                                    id: 2,
-                                    title: "Juara Olimpiade Matematika",
-                                    date: "10 April 2023",
-                                    excerpt: "Siswa kami meraih medali emas dalam Olimpiade Matematika Tingkat Nasional.",
-                                    image: "https://source.unsplash.com/random/600x400?sig=2&math"
-                                },
-                                {
-                                    id: 3,
-                                    title: "Study Tour Kelas XI",
-                                    date: "5 April 2023",
-                                    excerpt: "Kunjungan edukatif ke Yogyakarta untuk pembelajaran sejarah dan budaya.",
-                                    image: "https://source.unsplash.com/random/600x400?sig=3&travel"
-                                },
-                                {
-                                    id: 4,
-                                    title: "Study Tour Kelas XI",
-                                    date: "5 April 2023",
-                                    excerpt: "Kunjungan edukatif ke Yogyakarta untuk pembelajaran sejarah dan budaya.",
-                                    image: "https://source.unsplash.com/random/600x400?sig=3&travel"
-                                },
-                            ].map((post) => (
-                                <Card key={post.id} className="hover:shadow-lg transition-shadow h-full">
-                                    <CardHeader color="blue-gray" className="relative h-48">
-                                        <img
-                                            src={post.image}
-                                            alt={post.title}
-                                            className="h-full w-full object-cover"
-                                            onError={(e) => {
-                                                e.target.onerror = null;
-                                                e.target.src = "https://4.bp.blogspot.com/-95BtXQn3Qxw/VtpltoZc18I/AAAAAAAAABQ/C-GxksuSTJU/s1600/gambar-wallpaper-alam-kartun-cute.jpg";
-                                            }}
-                                        />
-                                    </CardHeader>
-                                    <CardBody>
-                                        <Typography variant="h5" className="mb-2">
-                                            {post.title}
-                                        </Typography>
-                                        <Typography variant="ll" color="gray" className="mb-3">
-                                            {post.date}
-                                        </Typography>
-                                        <Typography>
-                                            {post.excerpt}
-                                        </Typography>
-                                    </CardBody>
-                                    <CardFooter className="pt-0">
-                                        <Button variant="text" className="flex items-center gap-2 bg-blackColor text-white">
-                                            Baca Selengkapnya
-                                            <svg
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                fill="none"
-                                                viewBox="0 0 24 24"
-                                                strokeWidth={2}
-                                                stroke="currentColor"
-                                                className="h-4 w-4"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3"
-                                                />
-                                            </svg>
-                                        </Button>
-                                    </CardFooter>
-                                </Card>
-                            ))}
-                        </div>
+                        {loading.posts ? (
+                            <div className="text-center">Memuat postingan...</div>
+                        ) : error.posts ? (
+                            <div className="text-center text-red-500">Error: {error.posts}</div>
+                        ) : posts.length > 0 ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-6 gap-y-12">
+                                {posts.map(renderPostCard)}
+                            </div>
+                        ) : (
+                            <div className="text-center py-8">
+                                <Typography variant="h5" className="text-gray-500">
+                                    Tidak ada postingan tersedia
+                                </Typography>
+                            </div>
+                        )}
                     </div>
                 </div>
+
                 {/* Contact */}
                 <ContactUser />
-            </div >
+            </div>
         </div>
-
     );
 }

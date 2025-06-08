@@ -307,8 +307,8 @@ const ManageVirtualTourPage = () => {
     const [previewUrl, setPreviewUrl] = useState('');
 
     const pannellumRef = useRef(null);
-    const previewPannellumRef = useRef(null); // Untuk mode preview normal
-    const modalPannellumRef = useRef(null); // Untuk preview di modal
+    const previewPannellumRef = useRef(null);
+    const modalPannellumRef = useRef(null);
 
     const [pendingHotspot, setPendingHotspot] = useState(null);
 
@@ -326,9 +326,8 @@ const ManageVirtualTourPage = () => {
     }, []);
 
     useEffect(() => {
-        // Jika ada hotspot yang menunggu untuk disimpan setelah panorama disimpan
         if (pendingHotspot && selectedPanorama?.id && !editMode) {
-            // Now we can safely save the hotspot
+
             handleSaveHotspot(pendingHotspot);
             setPendingHotspot(null);
         }
@@ -344,13 +343,12 @@ const ManageVirtualTourPage = () => {
 
         setSelectedFile(file);
 
-        // Buat URL sementara untuk pratinjau
         const reader = new FileReader();
         reader.onload = () => {
-            setPreviewUrl(reader.result); // Perbarui previewUrl
+            setPreviewUrl(reader.result);
             setFormData((prev) => ({
                 ...prev,
-                gambar_panorama: reader.result // Perbarui formData.gambar_panorama
+                gambar_panorama: reader.result
             }));
         };
         reader.readAsDataURL(file);
@@ -380,10 +378,8 @@ const ManageVirtualTourPage = () => {
 
             let response;
             if (selectedPanorama?.id) {
-                // Update existing panorama
                 response = await VirtualTourService.updateVirtualTour(selectedPanorama.id, payload);
             } else {
-                // Create new panorama
                 response = await VirtualTourService.createVirtualTour(payload);
             }
 
@@ -391,7 +387,6 @@ const ManageVirtualTourPage = () => {
                 throw new Error(response.message || "Gagal menyimpan panorama");
             }
 
-            // Update state dengan data baru dari server
             const savedPanorama = response.data;
             setSelectedPanorama(savedPanorama);
             setFormData({
@@ -400,14 +395,12 @@ const ManageVirtualTourPage = () => {
                 hotspots: savedPanorama.hotspots || []
             });
 
-            // Refresh data
             await loadPanoramas();
             setEditMode(false);
             setShowSaveModal(false);
             setSelectedFile(null);
             setPreviewUrl('');
 
-            // If there was a pending hotspot, now we can save it
             if (pendingHotspot) {
                 handleSaveHotspot(pendingHotspot);
                 setPendingHotspot(null);
@@ -430,11 +423,11 @@ const ManageVirtualTourPage = () => {
                 ...panorama,
                 hotspots: (panorama.hotspots || []).map(hotspot => ({
                     ...hotspot,
-                    id_panorama_asal: hotspot.id_panorama_asal || panorama.id // Pastikan id_panorama_asal ada
+                    id_panorama_asal: hotspot.id_panorama_asal || panorama.id
                 }))
             }));
 
-            console.log("Loaded Panoramas:", panoramasWithHotspots); // Debugging log
+            console.log("Loaded Panoramas:", panoramasWithHotspots);
 
             setPanoramas(panoramasWithHotspots);
         } catch (error) {
@@ -449,10 +442,8 @@ const ManageVirtualTourPage = () => {
             setIsUploading(true);
             await VirtualTourService.deleteVirtualTour(panorama.id);
 
-            // Show success message
             setUploadError(null);
 
-            // Reset selection if deleting the currently selected panorama
             if (selectedPanorama?.id === panorama.id) {
                 setSelectedPanorama(null);
                 setFormData({
@@ -461,8 +452,6 @@ const ManageVirtualTourPage = () => {
                     hotspots: []
                 });
             }
-
-            // Refresh the list
             await loadPanoramas();
         } catch (error) {
             console.error("Gagal menghapus:", error);
@@ -472,9 +461,7 @@ const ManageVirtualTourPage = () => {
         }
     };
 
-    // Pastikan handleSelectPanorama mempertahankan semua data hotspot
     const handleSelectPanorama = useCallback((panorama) => {
-        // Ambil semua hotspot dengan id_panorama_asal yang sesuai
         const filteredHotspots = (panorama.hotspots || []).filter(
             (hotspot) => hotspot.id_panorama_asal === panorama.id
         );
@@ -511,6 +498,8 @@ const ManageVirtualTourPage = () => {
     };
 
     const handleAddHotspot = useCallback((position) => {
+        console.log('handleAddHotspot called with:', position);
+
         if (!pannellumRef.current || !formData.gambar_panorama) {
             alert('Harap unggah gambar panorama terlebih dahulu');
             return;
@@ -522,7 +511,7 @@ const ManageVirtualTourPage = () => {
         }
 
         const newHotspot = {
-            id_panorama_asal: selectedPanorama?.id, // Akan diisi nanti jika panorama belum ada
+            id_panorama_asal: selectedPanorama?.id,
             pitch: position.pitch,
             yaw: position.yaw,
             text: `Hotspot ${formData.hotspots.length + 1}`,
@@ -540,7 +529,9 @@ const ManageVirtualTourPage = () => {
     }, [formData.hotspots.length, formData.gambar_panorama, formData.nama_ruangan, selectedPanorama?.id]);
 
     const handleAddHotspotButton = () => {
-        if (!viewerInstance.current || !editMode || !onAddHotspot) { // Tambahkan pengecekan editMode
+
+
+        if (!viewerInstance.current || !editMode || !onAddHotspot) {
             console.error("Viewer not ready or not in edit mode");
             return;
         }
@@ -560,8 +551,6 @@ const ManageVirtualTourPage = () => {
 
     };
 
-
-    // Di dalam handleSaveHotspot, perbaiki cara menyimpan hotspot
     const handleSaveHotspot = useCallback(debounce(async (updatedHotspot) => {
         console.log("handleSaveHotspot dipanggil:", updatedHotspot);
 
@@ -574,7 +563,6 @@ const ManageVirtualTourPage = () => {
 
             let panoramaId = selectedPanorama?.id;
 
-            // Jika panorama belum ada ID (belum disimpan), simpan panorama terlebih dahulu
             if (!panoramaId) {
                 console.log("Panorama belum tersimpan. Menyimpan panorama terlebih dahulu...");
 
@@ -596,11 +584,9 @@ const ManageVirtualTourPage = () => {
                 setSelectedPanorama(panoramaResponse.data);
                 console.log("Panorama berhasil disimpan:", panoramaResponse.data);
 
-                // Perbarui daftar panorama setelah membuat yang baru
                 await loadPanoramas();
             }
 
-            // Sekarang kita memiliki ID panorama yang valid, bisa simpan hotspot
             const hotspotData = {
                 id_panorama_asal: panoramaId,
                 pitch: updatedHotspot.pitch,
@@ -632,10 +618,8 @@ const ManageVirtualTourPage = () => {
 
             const savedHotspot = response.data;
 
-            // Perbarui state dengan data terbaru dari server
             await loadPanoramas();
 
-            // Set hotspot aktif yang baru disimpan
             setActiveHotspot(savedHotspot);
             setShowHotspotModal(false);
         } catch (error) {
@@ -763,7 +747,7 @@ const ManageVirtualTourPage = () => {
                                         editMode={false}
                                         panoramas={panoramas}
                                         onSelectPanorama={handleSelectPanorama}
-                                        activeHotspot={activeHotspot} // Tambahkan ini
+                                        activeHotspot={activeHotspot}
                                     />
 
                                 </div>
@@ -876,7 +860,6 @@ const ManageVirtualTourPage = () => {
                                                                 setActiveHotspot(hotspot);
                                                                 setShowHotspotModal(true);
 
-                                                                // Paksa update viewer untuk merefresh tampilan hotspot
                                                                 if (pannellumRef.current) {
                                                                     pannellumRef.current.lookAt();
                                                                 }
@@ -904,10 +887,13 @@ const ManageVirtualTourPage = () => {
                                             image={formData.gambar_panorama}
                                             hotspots={formData.hotspots}
                                             editMode={editMode}
-                                            onAddHotspot={handleAddHotspot}
+                                            onAddHotspot={(position) => {
+                                                console.log('Position received:', position);
+                                                handleAddHotspot(position);
+                                            }}
                                             panoramas={panoramas}
                                             onSelectPanorama={handleSelectPanorama}
-                                            activeHotspot={activeHotspot} // Tambahkan ini
+                                            activeHotspot={activeHotspot}
                                         />
                                     </div>
                                 </div>
@@ -949,7 +935,7 @@ const ManageVirtualTourPage = () => {
                         editMode={false}
                         panoramas={panoramas}
                         onSelectPanorama={handleSelectPanorama}
-                        activeHotspot={activeHotspot} // Tambahkan ini
+                        activeHotspot={activeHotspot}
                     />
                 </DialogBody>
                 <DialogFooter>

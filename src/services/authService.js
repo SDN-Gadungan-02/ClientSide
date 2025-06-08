@@ -1,14 +1,11 @@
-// services/authService.js
 import axios from 'axios';
 
-// Create axios instance with base configuration
 const api = axios.create({
     baseURL: 'http://localhost:3000/api',
     withCredentials: true,
     timeout: 10000
 });
 
-// Request interceptor for adding token
 api.interceptors.request.use(config => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -17,7 +14,6 @@ api.interceptors.request.use(config => {
     return config;
 });
 
-// Response interceptor for handling errors
 api.interceptors.response.use(
     response => response,
     error => {
@@ -40,7 +36,6 @@ const login = async (username, password) => {
             localStorage.setItem('token', response.data.token);
             localStorage.setItem('user', JSON.stringify(response.data.user));
 
-            // Set default header for subsequent requests
             api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
 
             return {
@@ -62,7 +57,7 @@ const login = async (username, password) => {
         };
     }
 };
-// services/authService.js
+
 const verify = async () => {
     try {
         const response = await api.get('/auth/verify');
@@ -96,7 +91,6 @@ const logout = async () => {
     } catch (error) {
         console.error('Logout request failed:', error);
     } finally {
-        // Always clean up client-side
         localStorage.removeItem('token');
         localStorage.removeItem('role');
         delete api.defaults.headers.common['Authorization'];

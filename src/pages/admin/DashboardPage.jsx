@@ -20,12 +20,14 @@ import {
     DocumentTextIcon,
     UsersIcon,
     AcademicCapIcon,
+    MicrophoneIcon,
     ChartBarIcon,
     UserCircleIcon
 } from "@heroicons/react/24/solid";
 import { toast } from "react-toastify";
-import HistoryService from '../../services/historyService';
+import HistoryService from '../../services/HistoryService';
 import VisiMisiService from '../../services/visiMisiService';
+import HeadSpeechService from '../../services/headspeechService';
 
 const DashboardPage = () => {
     const [activeTab, setActiveTab] = useState("vision-mission");
@@ -51,62 +53,128 @@ const DashboardPage = () => {
         updatedAt: null
     });
 
+    const [headSpeechData, setHeadSpeechData] = useState({
+        id: null,
+        text: "Memuat sambutan kepala sekolah...",
+        author: null,
+        createdAt: null,
+        updatedAt: null
+    });
+
     const [editForm, setEditForm] = useState({
         vision: "",
         newMission: "",
         missions: [],
         newGoal: "",
         goals: [],
-        history: ""
+        history: "",
+        headSpeech: ""
     });
+
+    const [editHeadSpeech, setEditHeadSpeech] = useState({
+        text: "",
+        isEditing: false
+    });
+
+    const loadHeadSpeech = async () => {
+        try {
+            const response = await HeadSpeechService.getHeadSpeech();
+            setHeadSpeechData({
+                id: response.data.id,
+                text: response.data.text || "Sambutan kepala sekolah belum tersedia",
+                author: response.data.author,
+                createdAt: response.data.created_at,
+                updatedAt: response.data.updated_at
+            });
+            setEditHeadSpeech({
+                text: response.data.text || "",
+                isEditing: false
+            });
+        } catch (error) {
+            console.error("Gagal memuat sambutan kepala sekolah:", error);
+            toast.error("Gagal memuat sambutan kepala sekolah");
+        }
+    };
+
+    const saveHeadSpeech = async () => {
+        try {
+            const response = await HeadSpeechService.updateHeadSpeech(
+                editHeadSpeech.text // Mengirim text_speech sebagai parameter
+            );
+
+            setHeadSpeechData({
+                id: response.data.id,
+                text: response.data.text_speech || response.data.text, // Handle kedua kemungkinan nama field
+                createdAt: response.data.created_at,
+                updatedAt: response.data.updated_at
+            });
+
+            setEditHeadSpeech({ ...editHeadSpeech, isEditing: false });
+            toast.success("Sambutan kepala sekolah berhasil diperbarui");
+        } catch (error) {
+            console.error("Gagal memperbarui sambutan:", error);
+            toast.error("Gagal memperbarui sambutan kepala sekolah");
+        }
+    };
 
     const loadData = async () => {
         try {
             setIsLoading(true);
-
-            const historyResponse = await HistoryService.getHistory();
-            setHistoryData({
-                id: historyResponse.data.id,
-                text: historyResponse.data.text_history || "Sejarah sekolah belum tersedia",
-                author: historyResponse.data.author,
-                createdAt: historyResponse.data.created_at,
-                updatedAt: historyResponse.data.updated_at
-            });
-
-            const visiMisiResponse = await VisiMisiService.getVisiMisi();
-            setVisiMisiData({
-                id: visiMisiResponse.data.id,
-                visi: visiMisiResponse.data.text_visi || "Visi sekolah belum tersedia",
-                misi: Array.isArray(visiMisiResponse.data.text_misi) ?
-                    visiMisiResponse.data.text_misi :
-                    [visiMisiResponse.data.text_misi || "Misi sekolah belum tersedia"],
-                tujuan: Array.isArray(visiMisiResponse.data.text_tujuan) ?
-                    visiMisiResponse.data.text_tujuan :
-                    [visiMisiResponse.data.text_tujuan || "Tujuan sekolah belum tersedia"],
-                author: visiMisiResponse.data.author,
-                createdAt: visiMisiResponse.data.created_at,
-                updatedAt: visiMisiResponse.data.updated_at
-            });
-
-            setEditForm({
-                vision: visiMisiResponse.data.text_visi || "",
-                newMission: "",
-                missions: Array.isArray(visiMisiResponse.data.text_misi) ?
-                    visiMisiResponse.data.text_misi :
-                    [visiMisiResponse.data.text_misi || ""],
-                newGoal: "",
-                goals: Array.isArray(visiMisiResponse.data.text_tujuan) ?
-                    visiMisiResponse.data.text_tujuan :
-                    [visiMisiResponse.data.text_tujuan || ""],
-                history: historyResponse.data.text_history || ""
-            });
-
+            await Promise.all([
+                loadHistory(),
+                loadVisiMisi(),
+                loadHeadSpeech()
+            ]);
             setIsLoading(false);
         } catch (error) {
             console.error("Gagal memuat data:", error);
             toast.error("Gagal memuat data");
             setIsLoading(false);
         }
+    };
+
+    const loadHistory = async () => {
+        const historyResponse = await HistoryService.getHistory();
+        setHistoryData({
+            id: historyResponse.data.id,
+            text: historyResponse.data.text_history || "Sejarah sekolah belum tersedia",
+            author: historyResponse.data.author,
+            createdAt: historyResponse.data.created_at,
+            updatedAt: historyResponse.data.updated_at
+        });
+        setEditForm(prev => ({
+            ...prev,
+            history: historyResponse.data.text_history || ""
+        }));
+    };
+
+    const loadVisiMisi = async () => {
+        const visiMisiResponse = await VisiMisiService.getVisiMisi();
+        setVisiMisiData({
+            id: visiMisiResponse.data.id,
+            visi: visiMisiResponse.data.text_visi || "Visi sekolah belum tersedia",
+            misi: Array.isArray(visiMisiResponse.data.text_misi) ?
+                visiMisiResponse.data.text_misi :
+                [visiMisiResponse.data.text_misi || "Misi sekolah belum tersedia"],
+            tujuan: Array.isArray(visiMisiResponse.data.text_tujuan) ?
+                visiMisiResponse.data.text_tujuan :
+                [visiMisiResponse.data.text_tujuan || "Tujuan sekolah belum tersedia"],
+            author: visiMisiResponse.data.author,
+            createdAt: visiMisiResponse.data.created_at,
+            updatedAt: visiMisiResponse.data.updated_at
+        });
+        setEditForm(prev => ({
+            ...prev,
+            vision: visiMisiResponse.data.text_visi || "",
+            newMission: "",
+            missions: Array.isArray(visiMisiResponse.data.text_misi) ?
+                visiMisiResponse.data.text_misi :
+                [visiMisiResponse.data.text_misi || ""],
+            newGoal: "",
+            goals: Array.isArray(visiMisiResponse.data.text_tujuan) ?
+                visiMisiResponse.data.text_tujuan :
+                [visiMisiResponse.data.text_tujuan || ""]
+        }));
     };
 
     useEffect(() => {
@@ -120,7 +188,8 @@ const DashboardPage = () => {
             missions: Array.isArray(visiMisiData.misi) ? [...visiMisiData.misi] : [visiMisiData.misi],
             newGoal: "",
             goals: Array.isArray(visiMisiData.tujuan) ? [...visiMisiData.tujuan] : [visiMisiData.tujuan],
-            history: historyData?.text || ""
+            history: historyData?.text || "",
+            headSpeech: headSpeechData?.text || ""
         });
         setIsEditing(section);
     };
@@ -263,6 +332,12 @@ const DashboardPage = () => {
                             Sejarah Sekolah
                         </div>
                     </Tab>
+                    <Tab value="head-speech" onClick={() => setActiveTab("head-speech")}>
+                        <div className="flex items-center gap-2">
+                            <MicrophoneIcon className="h-5 w-5" />
+                            Sambutan Kepala
+                        </div>
+                    </Tab>
                 </TabsHeader>
             </Tabs>
 
@@ -311,7 +386,6 @@ const DashboardPage = () => {
                                     </div>
                                 </div>
 
-                                {/* Bagian Tujuan */}
                                 <div className="mb-4">
                                     <Typography variant="h5" className="mb-2 font-semibold">
                                         Tujuan
@@ -328,7 +402,6 @@ const DashboardPage = () => {
                                     </div>
                                 </div>
 
-                                {/* Informasi Pembaruan Terakhir */}
                                 {visiMisiData.author && (
                                     <div className="flex items-center gap-2 text-gray-500 text-sm mt-4">
                                         <UserCircleIcon className="h-4 w-4" />
@@ -346,7 +419,6 @@ const DashboardPage = () => {
                                 )}
                             </>
                         ) : (
-                            /* Mode Edit */
                             <>
                                 <div className="flex justify-between items-center mb-4">
                                     <Typography variant="h4" className="font-bold">
@@ -375,7 +447,6 @@ const DashboardPage = () => {
                                     </div>
                                 </div>
 
-                                {/* Edit Visi */}
                                 <div className="mb-6">
                                     <Typography variant="h5" className="mb-2 font-semibold">
                                         Visi
@@ -391,7 +462,6 @@ const DashboardPage = () => {
                                     </Typography>
                                 </div>
 
-                                {/* Edit Misi */}
                                 <div className="mb-6">
                                     <Typography variant="h5" className="mb-2 font-semibold">
                                         Misi
@@ -432,7 +502,6 @@ const DashboardPage = () => {
                                     </Typography>
                                 </div>
 
-                                {/* Edit Tujuan */}
                                 <div className="mb-4">
                                     <Typography variant="h5" className="mb-2 font-semibold">
                                         Tujuan
@@ -478,12 +547,10 @@ const DashboardPage = () => {
                 </Card>
             )}
 
-            {/* Konten Tab Sejarah Sekolah */}
             {activeTab === "history" && (
                 <Card>
                     <CardBody>
                         {isEditing !== "history" ? (
-                            /* Mode Tampilan */
                             <>
                                 <div className="flex justify-between items-center mb-4">
                                     <Typography variant="h4" className="font-bold">
@@ -523,7 +590,6 @@ const DashboardPage = () => {
                                 )}
                             </>
                         ) : (
-                            /* Mode Edit */
                             <>
                                 <div className="flex justify-between items-center mb-4">
                                     <Typography variant="h4" className="font-bold">
@@ -560,14 +626,116 @@ const DashboardPage = () => {
                                     className="mb-4"
                                 />
 
-                                <Typography variant="small" className="text-gray-500">
+                                <div className="text-gray-500 text-sm">
                                     Tips:
-                                    <ul className="list-disc pl-5 mt-1">
+                                    <ul className="list-disc pl-5 mt-1 space-y-1">
                                         <li>Gunakan format paragraf yang jelas</li>
                                         <li>Ceritakan sejarah sekolah secara kronologis</li>
                                         <li>Sertakan pencapaian penting sekolah</li>
                                     </ul>
-                                </Typography>
+                                </div>
+                            </>
+                        )}
+                    </CardBody>
+                </Card>
+            )}
+
+            {activeTab === "head-speech" && (
+                <Card>
+                    <CardBody>
+                        {!editHeadSpeech.isEditing ? (
+                            <>
+                                <div className="flex justify-between items-center mb-4">
+                                    <Typography variant="h4" className="font-bold">
+                                        Sambutan Kepala Sekolah
+                                    </Typography>
+                                    <Button
+                                        size="sm"
+                                        color="blue"
+                                        onClick={() => setEditHeadSpeech({
+                                            text: headSpeechData.text,
+                                            isEditing: true
+                                        })}
+                                        className="flex items-center gap-2"
+                                    >
+                                        <PencilIcon className="h-4 w-4" />
+                                        Edit
+                                    </Button>
+                                </div>
+
+                                <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                                    <Typography className="whitespace-pre-line">
+                                        {headSpeechData.text}
+                                    </Typography>
+                                </div>
+
+                                {headSpeechData.author && (
+                                    <div className="flex items-center gap-2 text-gray-500 text-sm">
+                                        <UserCircleIcon className="h-4 w-4" />
+                                        <span>
+                                            Terakhir diperbarui oleh: {headSpeechData.author} •
+                                            {new Date(headSpeechData.updatedAt || headSpeechData.createdAt).toLocaleDateString('id-ID', {
+                                                day: 'numeric',
+                                                month: 'long',
+                                                year: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })}
+                                        </span>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <div className="flex justify-between items-center mb-4">
+                                    <Typography variant="h4" className="font-bold">
+                                        Edit Sambutan Kepala Sekolah
+                                    </Typography>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            size="sm"
+                                            color="green"
+                                            onClick={saveHeadSpeech}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <CheckIcon className="h-4 w-4" />
+                                            Simpan
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            color="red"
+                                            variant="outlined"
+                                            onClick={() => setEditHeadSpeech({
+                                                ...editHeadSpeech,
+                                                isEditing: false
+                                            })}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <XMarkIcon className="h-4 w-4" />
+                                            Batal
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <Textarea
+                                    label="Sambutan Kepala Sekolah"
+                                    rows={8}
+                                    value={editHeadSpeech.text}
+                                    onChange={(e) => setEditHeadSpeech({
+                                        ...editHeadSpeech,
+                                        text: e.target.value
+                                    })}
+                                    className="mb-4"
+                                />
+
+                                <div className="text-gray-500 text-sm">
+                                    Tips:
+                                    <ul className="list-disc pl-5 mt-1 space-y-1">
+                                        <li>Gunakan bahasa yang formal dan sopan</li>
+                                        <li>Sampaikan visi dan harapan untuk sekolah</li>
+                                        <li>Sertakan ucapan terima kasih kepada semua pihak</li>
+                                    </ul>
+                                </div>
                             </>
                         )}
                     </CardBody>

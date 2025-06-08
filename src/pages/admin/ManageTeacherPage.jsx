@@ -45,11 +45,15 @@ const ManageTeacherPage = () => {
         setState(prev => ({ ...prev, [key]: value }));
     };
 
-    const fetchTeachers = async () => {
+    const [searchDebounce, setSearchDebounce] = useState(null);
+
+    const fetchTeachers = async (search = "") => {
         try {
             setStateValue("loading", true);
-            const response = await TeacherService.getTeachers(searchTerm);
-            setStateValue("teachers", response.data || []); // Changed from response.data.data to response.data
+            const response = await TeacherService.getTeachers(search);
+            // Pastikan teachers selalu array
+            const data = response.data;
+            setStateValue("teachers", Array.isArray(data) ? data : []);
         } catch (error) {
             console.error("Error fetching teachers:", error);
             toast.error("Gagal memuat data guru");
@@ -57,10 +61,34 @@ const ManageTeacherPage = () => {
                 localStorage.removeItem("token");
                 navigate("/login");
             }
+            // Jika error, pastikan teachers tetap array
+            setStateValue("teachers", []);
         } finally {
             setStateValue("loading", false);
         }
     };
+
+    useEffect(() => {
+        // Clear previous debounce timer
+        if (searchDebounce) {
+            clearTimeout(searchDebounce);
+        }
+
+        // Set new debounce timer
+        const timer = setTimeout(() => {
+            fetchTeachers(searchTerm);
+        }, 500); // 500ms delay
+
+        setSearchDebounce(timer);
+
+        // Cleanup function
+        return () => {
+            if (searchDebounce) {
+                clearTimeout(searchDebounce);
+            }
+        };
+    }, [searchTerm]);
+
 
     useEffect(() => {
         const debounceTimer = setTimeout(() => {
@@ -120,13 +148,19 @@ const ManageTeacherPage = () => {
         try {
             const formData = new FormData();
             formData.append("nama_guru", currentTeacher.nama_guru);
-            formData.append("NIP", currentTeacher.nip);
+            formData.append("nip", currentTeacher.nip);
             formData.append("keterangan_guru", currentTeacher.keterangan_guru);
 
             if (imageFile) {
                 formData.append("pas_foto", imageFile);
             } else if (isEditing && currentTeacher.pas_foto) {
                 formData.append("keepExistingImage", "true");
+            }
+
+            // Cek token sebelum mengirim
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found');
             }
 
             if (isEditing) {
@@ -139,9 +173,15 @@ const ManageTeacherPage = () => {
             await fetchTeachers();
             toast.success(`Guru berhasil ${isEditing ? "diupdate" : "ditambahkan"}`);
         } catch (error) {
-            console.error("Error:", error);
-            toast.error(error.response?.data?.message ||
-                `Gagal ${isEditing ? "mengupdate" : "menambahkan"} guru`);
+            console.error("Full error:", error);
+
+            if (error.response?.status === 403) {
+                toast.error("Akses ditolak. Anda tidak memiliki izin untuk tindakan ini.");
+            } else if (error.response?.data?.message) {
+                toast.error(error.response.data.message);
+            } else {
+                toast.error(`Gagal ${isEditing ? "mengupdate" : "menambahkan"} guru`);
+            }
         } finally {
             setStateValue("isSubmitting", false);
         }
@@ -185,6 +225,8 @@ const ManageTeacherPage = () => {
                         icon={<MagnifyingGlassIcon className="h-5 w-5" />}
                         value={searchTerm}
                         onChange={(e) => setStateValue("searchTerm", e.target.value)}
+                        placeholder="Cari berdasarkan nama, NIP, atau keterangan..."
+                        className="w-full md:w-1/2"
                     />
                 </div>
                 <Button className="flex items-center gap-2" onClick={() => handleOpenModal()}>
@@ -205,7 +247,7 @@ const ManageTeacherPage = () => {
                                     <tr>
                                         {["Foto", "Nama", "NIP", "Keterangan", "Aksi"].map((head) => (
                                             <th key={head} className="border-b border-blue-gray-100 bg-blue-gray-50 p-4">
-                                                <Typography variant="small" className="font-normal leading-none opacity-70">
+                                                <Typography variant="small" className="font-normal leading-none opacity-70 text-center">
                                                     {head}
                                                 </Typography>
                                             </th>
@@ -214,7 +256,7 @@ const ManageTeacherPage = () => {
                                 </thead>
                                 <tbody>
                                     {teachers.map((teacher) => (
-                                        <tr key={teacher.id} className="border-b border-blue-gray-100">
+                                        <tr key={teacher.id} className="border-b border-blue-gray-100 text-center">
                                             <td className="p-4">
                                                 <Avatar
                                                     src={teacher.pas_foto || "/default-avatar.jpg"}
@@ -232,7 +274,7 @@ const ManageTeacherPage = () => {
                                             <td className="p-4">{teacher.keterangan_guru}</td>
 
                                             <td className="p-4">
-                                                <div className="flex gap-2">
+                                                <div className="flex gap-2 justify-center">
                                                     <Tooltip content="Edit">
                                                         <IconButton
                                                             variant="text"
@@ -327,6 +369,7 @@ const ManageTeacherPage = () => {
                     <Input
                         label="NIP"
                         name="nip"
+                        type="number"
                         value={currentTeacher.nip}
                         onChange={handleChange}
                         error={!!errors.nip}

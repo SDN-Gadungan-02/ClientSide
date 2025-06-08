@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../components/auth/AuthContext';
+import logo from '../../assets/react.svg';
 
 const LoginPage = () => {
     const [formData, setFormData] = useState({
@@ -19,7 +20,6 @@ const LoginPage = () => {
         });
     };
 
-    // pages/LoginPage.jsx
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -27,10 +27,8 @@ const LoginPage = () => {
 
         try {
             const result = await login(formData.username, formData.password);
-            console.log('Login result:', result);
 
             if (result.success) {
-                // Check if user object exists and has role
                 if (result.user && result.user.role) {
                     const targetRoute = result.user.role === 'superadmin'
                         ? '/admin/dashboard'
@@ -51,47 +49,62 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <div className="max-w-md w-full bg-white p-8 rounded-lg shadow">
-                <h2 className="text-2xl font-bold mb-6 text-center">Login Admin</h2>
+        <div className="min-h-screen flex flex-row items-center justify-center bg-gray-50 p-4">
+            {/* Logo Section */}
+            <div className="mb-10">
+                <div className="text-3xl font-bold">
+                    <img
+                        src={logo}
+                        alt="Logo"
+                        className="w-40 h-40 object-contain mb-4"
+                    />
 
-                {error && (
-                    <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
-                        {error}
-                    </div>
-                )}
+                </div>
+            </div>
+            <div className="w-36"></div>
+            {/* Login Form Section */}
+            <div className="w-full max-w-xs bg-white p-6 rounded-lg shadow-md">
+                <h1 className="text-2xl font-bold mb-8 text-center">Login</h1>
 
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-4">
-                        <label className="block mb-2">Username</label>
+
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
                         <input
                             type="text"
                             name="username"
-                            className="w-full p-2 border rounded"
+                            className="w-full p-2 border border-gray-300 rounded"
                             value={formData.username}
                             onChange={handleChange}
                             required
                         />
                     </div>
 
-                    <div className="mb-6">
-                        <label className="block mb-2">Password</label>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
                         <input
                             type="password"
                             name="password"
-                            className="w-full p-2 border rounded"
+                            className="w-full p-2 border border-gray-300 rounded"
                             value={formData.password}
                             onChange={handleChange}
                             required
                         />
                     </div>
 
+                    {error && (
+                        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded text-sm">
+                            {error}
+                        </div>
+                    )}
+
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50"
+                        className="w-full bg-darkGreenColor text-white py-2 px-4 rounded  disabled:opacity-50"
                     >
-                        {loading ? 'Memproses...' : 'Login'}
+                        {loading ? 'Processing...' : 'Login'}
                     </button>
                 </form>
             </div>

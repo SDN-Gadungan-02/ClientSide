@@ -23,11 +23,11 @@ import {
     XMarkIcon,
     UserCircleIcon,
     EnvelopeIcon,
+    MagnifyingGlassIcon,
     LockClosedIcon
 } from "@heroicons/react/24/solid";
 import { toast } from 'react-toastify';
-
-import api from '../../utils/api';
+import UserService from "../../services/userService";
 
 const ManageUserPage = () => {
     const [users, setUsers] = useState([]);
@@ -43,36 +43,146 @@ const ManageUserPage = () => {
     const [openDeleteModal, setOpenDeleteModal] = useState(false);
     const [userToDelete, setUserToDelete] = useState(null);
     const [errors, setErrors] = useState({});
+    const [currentUserId, setCurrentUserId] = useState(null);
 
-    const fetchUsers = async () => {
+    const [searchTerm, setSearchTerm] = useState("");
+    const [searchDebounce, setSearchDebounce] = useState(null);
+
+
+    const fetchUsers = async (search = "") => {
         try {
             setLoading(true);
-            const response = await api.get('/users');
-            setUsers(response.data.data);
+            const response = await UserService.getUsers(search);
+
+            // Pastikan response.data.data adalah array
+            if (Array.isArray(response.data?.data)) {
+                setUsers(response.data.data);
+            } else {
+                console.error('Invalid users data format:', response.data);
+                toast.error('Invalid users data format');
+                setUsers([]); // Set ke array kosong jika format tidak sesuai
+            }
         } catch (error) {
+            console.error('Error fetching users:', error);
+
             if (error.response?.status === 401) {
                 localStorage.removeItem('token');
                 window.location.href = '/login';
+            } else {
+                toast.error(error.response?.data?.message || 'Failed to fetch users');
             }
-            console.error('Error fetching users:', error);
-            toast.error(error.response?.data?.message || 'Failed to fetch users');
         } finally {
-            setLoading(false);
+            setLoading(false); // Pastikan loading selalu di-set ke false
         }
     };
 
     useEffect(() => {
+        // Clear previous debounce timer
+        if (searchDebounce) {
+            clearTimeout(searchDebounce);
+        }
+
+        // Set new debounce timer
+        const timer = setTimeout(() => {
+            fetchUsers(searchTerm);
+        }, 500); // 500ms delay
+
+        setSearchDebounce(timer);
+
+        // Cleanup function
+        return () => {
+            if (searchDebounce) {
+                clearTimeout(searchDebounce);
+            }
+        };
+    }, [searchTerm]);
+
+    // Tambahkan useEffect untuk debug
+    useEffect(() => {
+        console.log('Users state:', users);
+        console.log('Loading state:', loading);
+    }, [users, loading]);
+
+    const handleSaveUser = async () => {
+        const formErrors = validateForm();
+        if (Object.keys(formErrors).length > 0) {
+            setErrors(formErrors);
+            return;
+        }
+
+        try {
+            // Siapkan data yang akan dikirim
+            const userData = {
+                username: currentUser.username,
+                email: currentUser.email,
+                role: currentUser.role
+            };
+
+            // Jika mode edit dan ada password baru, tambahkan password
+            if (isEditing && currentUser.password) {
+                userData.password = currentUser.password;
+            }
+            // Jika mode create, wajib ada password
+            else if (!isEditing) {
+                userData.password = currentUser.password;
+            }
+
+            if (isEditing) {
+                await UserService.updateUser(currentUser.id, userData);
+                toast.success('User updated successfully');
+            } else {
+                await UserService.createUser(userData);
+                toast.success('User created successfully');
+            }
+
+            fetchUsers();
+            handleCloseModal();
+        } catch (error) {
+            console.error('Error saving user:', error);
+            toast.error(error.response?.data?.message || 'Failed to save user');
+        }
+    };
+
+    useEffect(() => {
+        // Get current user ID from localStorage or wherever you store it
+        const userData = JSON.parse(localStorage.getItem('user')); // adjust this based on how you store user data
+        if (userData) {
+            setCurrentUserId(userData.id);
+        }
         fetchUsers();
     }, []);
 
+    const handleDeleteUser = async () => {
+        if (userToDelete === currentUserId) {
+            toast.error('Anda tidak dapat menghapus akun sendiri');
+            handleCloseDeleteModal();
+            return;
+        }
+
+        try {
+            await UserService.deleteUser(userToDelete);
+            toast.success('User deleted successfully');
+            fetchUsers();
+            handleCloseDeleteModal();
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            toast.error(error.response?.data?.message || 'Failed to delete user');
+        }
+    };
+
     const handleOpenModal = (user = null) => {
         if (user) {
+            // Mode edit - isi form dengan data user yang dipilih
             setCurrentUser({
-                ...user,
-                password: ''
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                password: "", // Password tidak ditampilkan saat edit
+                role: user.role
             });
             setIsEditing(true);
         } else {
+            // Mode tambah baru - reset form
             setCurrentUser({
                 username: "",
                 email: "",
@@ -81,8 +191,8 @@ const ManageUserPage = () => {
             });
             setIsEditing(false);
         }
-        setErrors({});
         setOpenModal(true);
+        setErrors({}); // Reset error state
     };
 
     const handleCloseModal = () => {
@@ -115,40 +225,6 @@ const ManageUserPage = () => {
         return newErrors;
     };
 
-    const handleSaveUser = async () => {
-        const formErrors = validateForm();
-        if (Object.keys(formErrors).length > 0) {
-            setErrors(formErrors);
-            return;
-        }
-
-        try {
-            if (isEditing) {
-                await axios.put(`${API_URL}/api/users/${currentUser.id}`, currentUser);
-            } else {
-                await axios.post(`${API_URL}/api/users`, currentUser);
-            }
-
-            fetchUsers();
-            handleCloseModal();
-        } catch (error) {
-            console.error('Error saving user:', error);
-            toast.error(error.response?.data?.message || 'Failed to save user');
-        }
-    };
-
-    const handleDeleteUser = async () => {
-        try {
-            await axios.delete(`${API_URL}/api/users/${userToDelete}`)
-            toast.success('User deleted successfully');
-            fetchUsers();
-            handleCloseDeleteModal();
-        } catch (error) {
-            console.error('Error deleting user:', error);
-            toast.error(error.response?.data?.message || 'Failed to delete user');
-        }
-    };
-
     return (
         <div className="container mx-auto p-4">
             <Dialog open={openModal} handler={handleCloseModal} size="lg">
@@ -176,20 +252,6 @@ const ManageUserPage = () => {
                     />
                     {errors.email && <span className="text-red-500 text-sm">{errors.email}</span>}
 
-                    {!isEditing && (
-                        <>
-                            <Input
-                                type="password"
-                                label="Password"
-                                name="password"
-                                value={currentUser.password}
-                                onChange={handleChange}
-                                error={!!errors.password}
-                                icon={<LockClosedIcon className="h-5 w-5" />}
-                            />
-                            {errors.password && <span className="text-red-500 text-sm">{errors.password}</span>}
-                        </>
-                    )}
 
                     <Select
                         label="Role"
@@ -235,6 +297,28 @@ const ManageUserPage = () => {
 
             <Card className="mb-6">
                 <CardBody>
+                    <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                        <Typography variant="h5" className="font-bold">
+                            Daftar Pengguna
+                        </Typography>
+
+                        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                            <Input
+                                label="Cari Pengguna..."
+                                icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                placeholder="Cari berdasarkan nama, email, atau role..."
+                                className="w-full md:w-64"
+                            />
+                            <Button
+                                className="flex items-center gap-2 whitespace-nowrap"
+                                onClick={() => handleOpenModal()}
+                            >
+                                <PlusIcon className="h-5 w-5" /> Tambah Pengguna
+                            </Button>
+                        </div>
+                    </div>
                     <div className="flex justify-between items-center mb-6">
                         <Typography variant="h5" className="font-bold">
                             Daftar Pengguna
@@ -283,21 +367,26 @@ const ManageUserPage = () => {
                                                         <Tooltip content="Edit">
                                                             <IconButton
                                                                 variant="text"
-                                                                color="blue"
-                                                                onClick={() => handleOpenModal(user)}
+                                                                color="yellow"
+                                                                onClick={() => {
+                                                                    const userToEdit = users.find(u => u.id === user.id);
+                                                                    handleOpenModal(userToEdit);
+                                                                }}
                                                             >
                                                                 <PencilIcon className="h-5 w-5" />
                                                             </IconButton>
                                                         </Tooltip>
-                                                        <Tooltip content="Hapus">
+                                                        <Tooltip content={user.id === currentUserId ? "Anda tidak dapat menghapus akun sendiri" : "Hapus"}>
                                                             <IconButton
                                                                 variant="text"
                                                                 color="red"
                                                                 onClick={() => handleOpenDeleteModal(user.id)}
+                                                                disabled={user.id === currentUserId}
                                                             >
                                                                 <TrashIcon className="h-5 w-5" />
                                                             </IconButton>
                                                         </Tooltip>
+
                                                     </div>
                                                 </td>
                                             </tr>

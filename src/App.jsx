@@ -1,6 +1,4 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import HomePage from './pages/user/HomePage'
 import FeedPage from './pages/user/FeedPage'
@@ -21,7 +19,6 @@ import Layout from './components/user/Layout'
 
 import './App.css'
 
-
 function App() {
   const [count, setCount] = useState(0)
 
@@ -37,21 +34,28 @@ function App() {
         <Route path="visi-misi" element={<VisiMisiPage />} />
         <Route path="sambutan-kepala-sekolah" element={<HeadSpeechPage />} />
       </Route>
-      <Route path="/admin" element={<LayoutAdmin />}>
+
+      <Route
+        path="/admin"
+        element={
+          <RequireAuth allowedRoles={['admin', 'superadmin']}>
+            <LayoutAdmin />
+          </RequireAuth>
+        }
+      >
+
+        <Route index element={<Navigate to="kelola-postingan" replace />} />
+
         <Route
           path="kelola-postingan"
-          element={
-            <RequireAuth allowedRoles={['admin', 'superadmin']}>
-              <ManagePostPage path="posts" />
-            </RequireAuth>
-          }
+          element={<ManagePostPage path="posts" />}
         />
 
-        {/* Hanya superadmin yang bisa akses route berikut */}
+
         <Route
           path="dashboard"
           element={
-            <RequireAuth allowedRoles={['superadmin']} >
+            <RequireAuth allowedRoles={['superadmin']}>
               <DashboardPage path="dashboard" />
             </RequireAuth>
           }
@@ -59,7 +63,7 @@ function App() {
         <Route
           path="kelola-pengguna"
           element={
-            <RequireAuth allowedRoles={['superadmin']} >
+            <RequireAuth allowedRoles={['superadmin']}>
               <ManageUserPage path="users" />
             </RequireAuth>
           }
@@ -67,7 +71,7 @@ function App() {
         <Route
           path="kelola-guru"
           element={
-            <RequireAuth allowedRoles={['superadmin']} >
+            <RequireAuth allowedRoles={['superadmin']}>
               <ManageTeacherPage path="teacher" />
             </RequireAuth>
           }
@@ -75,16 +79,15 @@ function App() {
         <Route
           path="kelola-virtual-tour"
           element={
-            <RequireAuth allowedRoles={['superadmin']} >
+            <RequireAuth allowedRoles={['superadmin']}>
               <ManageVirtualTourPage path="kelola-virtual-tour" />
             </RequireAuth>
           }
         />
-      </Route >
+      </Route>
 
-      {/* Fallback Route */}
-      <Route path="*" element={< Navigate to="/" replace />} />
-    </Routes >
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
 }
 
